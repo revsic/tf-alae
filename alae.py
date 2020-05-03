@@ -13,19 +13,18 @@ class MlpALAE(tf.keras.Model):
 
         self.gamma = settings['gamma']
 
-        self.f = tf.keras.Sequential([
-            tf.keras.layers.Dense(dim) for dim in settings['f']])
-        self.g = tf.keras.Sequential([
-            tf.keras.layers.Dense(dim) for dim in settings['g']])
-        self.e = tf.keras.Sequential([
-            tf.keras.layers.Dense(dim) for dim in settings['e']])
-        self.d = tf.keras.Sequential([
-            tf.keras.layers.Dense(dim) for dim in settings['d']])
-
-        self.f.build((None, self.z_dim))
-        self.g.build((None, self.latent_dim))
-        self.e.build((None, self.output_dim))
-        self.d.build((None, self.latent_dim))
+        def seq(dims, input_dim):
+            layer = tf.keras.Sequential([
+                tf.keras.layers.Dense(dim, activation='relu')
+                for dim in dims[:-1]])
+            layer.add(tf.keras.layers.Dense(dims[-1]))
+            layer.build((None, input_dim))
+            return layer
+        
+        self.f = seq(settings['f'], self.z_dim)
+        self.g = seq(settings['g'], self.latent_dim)
+        self.e = seq(settings['e'], self.output_dim)
+        self.d = seq(settings['d'], self.latent_dim)
 
         self.fakepass = tf.keras.Sequential([
             self.f, self.g, self.e, self.d])
@@ -76,17 +75,17 @@ class MlpALAE(tf.keras.Model):
         self.optimizer.apply_gradients(zip(grad, self.eg_var))
 
     @staticmethod
-    def default_setting():
+    def default_setting(z_dim=128, latent_dim=50, output_dim=784):
         return {
-            'z_dim': 50,
-            'latent_dim': 50,
-            'output_dim': 784,
+            'z_dim': z_dim,
+            'latent_dim': latent_dim,
+            'output_dim': output_dim,
             'gamma': 1,
-            'f': [1024, 50],
-            'g': [1024, 784],
-            'e': [1024, 50],
+            'f': [1024, latent_dim],
+            'g': [1024, output_dim],
+            'e': [1024, latent_dim],
             'd': [1024, 1],
             'lr': 0.002,
-            'beta1': 0.0,
+            'beta1': 0.9,
             'beta2': 0.99,
         }
