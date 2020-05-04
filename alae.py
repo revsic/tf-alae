@@ -15,5 +15,8 @@ class ALAE(tf.keras.Model):
         latent = self.encoder(x)
         return latent, self.generator(latent)
     
+    def losses(self, x):
+        raise NotImplementedError('ALAE.metrics is not implemented')
+
     def trainstep(self, x):
         raise NotImplementedError('ALAE.trainstep is not implemented')
