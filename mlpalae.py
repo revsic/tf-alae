@@ -45,40 +45,54 @@ class MlpAlae(ALAE):
         return self.g(*args, **kwargs)
 
     @tf.function
-    def trainstep(self, x):
+    def _disc_loss(self, z, x):
+        with tf.GradientTape() as tape:
+            fakeloss = tf.reduce_mean(tf.math.softplus(self.fakepass(x)))
+            realloss = tf.reduce_mean(tf.math.softplus(-self.realpass(x)))
+
+        grad = tape.gradient(realloss, self.ed_var)
+        gradreg = self.gamma / 2 * tf.reduce_mean([
+            tf.reduce_mean(tf.square(x)) for x in grad])
+
+        return fakeloss + realloss + gradreg
+
+    @tf.function
+    def _gen_loss(self, z, _):
+        return tf.reduce_mean(tf.math.softplus(-self.fakepass(z)))
+
+    @tf.function
+    def _latent_loss(self, z, _):
+        latent = self.f(z)
+        recovered = self.latentpass(z)
+        return tf.reduce_mean(tf.square(latent - recovered))
+
+    def losses(self, x):
         bsize = x.shape[0]
         z = tf.random.normal((bsize, self.z_dim), 0, 1)
-        with tf.GradientTape() as tape, tf.GradientTape() as regtape:
-            fake = self.fakepass(z)
-            real = self.realpass(x)
+        return {
+            'disc': self._disc_loss(z, x),
+            'gen': self._gen_loss(z),
+            'latent': self._latent_loss(z),
+        }
 
-            grad = regtape.gradient(real, self.ed_var)
-            reg = self.gamma / 2 * tf.reduce_mean(
-                [tf.reduce_mean(tf.square(x)) for x in grad])
-
-            fakeloss = tf.reduce_mean(tf.math.softplus(fake))
-            realloss = tf.reduce_mean(tf.math.softplus(-real))
-            loss = fakeloss + realloss + reg
-
-        grad = tape.gradient(loss, self.ed_var)
-        self.optimizer.apply_gradients(zip(grad, self.ed_var))
-
-        z = tf.random.normal((bsize, self.z_dim), 0, 1)
+    def _update(self, x, loss_fn, var):
+        z = tf.random.normal((x.shape[0], self.z_dim), 0, 1)
         with tf.GradientTape() as tape:
-            fake = self.fakepass(z)
-            fakeloss = tf.reduce_mean(tf.math.softplus(-fake))
+            loss = loss_fn(z, x)
+        
+        grad = tape.gradient(loss, var)
+        self.optimizer.apply_gradients(zip(grad, var))
+        return z.numpy(), loss.numpy()
 
-        grad = tape.gradient(fakeloss, self.fg_var)
-        self.optimizer.apply_gradients(zip(grad, self.fg_var))
-
-        z = tf.random.normal((bsize, self.z_dim), 0, 1)
-        with tf.GradientTape() as tape:
-            latent = self.f(z)
-            fakelatent = self.latentpass(z)
-            loss = tf.reduce_mean(tf.square(latent - fakelatent))
-
-        grad = tape.gradient(loss, self.eg_var)
-        self.optimizer.apply_gradients(zip(grad, self.eg_var))
+    def trainstep(self, x):
+        _, dloss = self._update(x, self._disc_loss, self.ed_var)
+        _, gloss = self.update(x, self._gen_loss, self.fg_var)
+        _, lloss = self.update(x, self._latent_loss, self.eg_var)
+        return {
+            'disc': dloss,
+            'gen': gloss,
+            'latent': lloss,
+        }
 
     @staticmethod
     def default_setting(z_dim=128, latent_dim=50, output_dim=784):
