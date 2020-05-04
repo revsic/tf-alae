@@ -1,6 +1,7 @@
 import os
 
 import tensorflow as tf
+import tqdm
 
 from mnist import MNIST
 from mlpalae import MlpAlae
@@ -15,7 +16,7 @@ class Trainer:
 
     def train(self, model, epochs, trainset, testset):
         step = 0
-        for _ in range(epochs):
+        for _ in tqdm.tqdm(range(epochs)):
             for datum in trainset:
                 step += 1
                 losses = model.trainstep(datum)
