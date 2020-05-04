@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+from alae import ALAE
+
 
 class MlpAlae(ALAE):
     def __init__(self, settings=None):
@@ -85,6 +87,7 @@ class MlpAlae(ALAE):
         return z.numpy(), loss.numpy()
 
     def trainstep(self, x):
+        x = tf.reshape(x, (x.shape[0], -1))
         _, dloss = self._update(x, self._disc_loss, self.ed_var)
         _, gloss = self.update(x, self._gen_loss, self.fg_var)
         _, lloss = self.update(x, self._latent_loss, self.eg_var)
