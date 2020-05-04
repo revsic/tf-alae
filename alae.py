@@ -20,7 +20,7 @@ class MlpALAE(tf.keras.Model):
             layer.add(tf.keras.layers.Dense(dims[-1]))
             layer.build((None, input_dim))
             return layer
-        
+
         self.f = seq(settings['f'], self.z_dim)
         self.g = seq(settings['g'], self.latent_dim)
         self.e = seq(settings['e'], self.output_dim)
@@ -29,7 +29,7 @@ class MlpALAE(tf.keras.Model):
         self.fakepass = tf.keras.Sequential([
             self.f, self.g, self.e, self.d])
         self.realpass = tf.keras.Sequential([self.e, self.d])
-        self.fakelatent = tf.keras.Sequential([self.f, self.g, self.e])
+        self.latentpass = tf.keras.Sequential([self.f, self.g, self.e])
 
         self.ed_var = self.e.trainable_variables + self.d.trainable_variables
         self.fg_var = self.f.trainable_variables + self.g.trainable_variables
@@ -40,7 +40,7 @@ class MlpALAE(tf.keras.Model):
 
     def encoder(self, *args, **kwargs):
         return self.e(*args, **kwargs)
-    
+
     def generator(self, *args, **kwargs):
         return self.g(*args, **kwargs)
 
@@ -59,7 +59,7 @@ class MlpALAE(tf.keras.Model):
             fakeloss = tf.reduce_mean(tf.math.softplus(fake))
             realloss = tf.reduce_mean(tf.math.softplus(-real))
             loss = fakeloss + realloss + reg
-        
+
         grad = tape.gradient(loss, self.ed_var)
         self.optimizer.apply_gradients(zip(grad, self.ed_var))
 
@@ -67,16 +67,16 @@ class MlpALAE(tf.keras.Model):
         with tf.GradientTape() as tape:
             fake = self.fakepass(z)
             fakeloss = tf.reduce_mean(tf.math.softplus(-fake))
-        
+
         grad = tape.gradient(fakeloss, self.fg_var)
         self.optimizer.apply_gradients(zip(grad, self.fg_var))
 
         z = tf.random.normal((bsize, self.z_dim), 0, 1)
         with tf.GradientTape() as tape:
             latent = self.f(z)
-            fakelatent = self.fakelatent(z)
+            fakelatent = self.latentpass(z)
             loss = tf.reduce_mean(tf.square(latent - fakelatent))
-        
+
         grad = tape.gradient(loss, self.eg_var)
         self.optimizer.apply_gradients(zip(grad, self.eg_var))
 
