@@ -38,6 +38,12 @@ class MlpALAE(tf.keras.Model):
         self.optimizer = tf.keras.optimizers.Adam(
             settings['lr'], settings['beta1'], settings['beta2'])
 
+    def encoder(self, *args, **kwargs):
+        return self.e(*args, **kwargs)
+    
+    def generator(self, *args, **kwargs):
+        return self.g(*args, **kwargs)
+
     @tf.function
     def trainstep(self, x):
         bsize = x.shape[0]
