@@ -48,7 +48,7 @@ class Trainer:
 
     def write_image(self, flat, step, train=True, name='image'):
         idx = np.random.randint(flat.shape[0])
-        image = (flat[idx:idx + 1] + 1.) * 127.5
+        image = (flat[idx:idx + 1] + 1.) / 2.
         summary = self.train_summary if train else self.test_summary
         with summary.as_default():
             tf.summary.image(
