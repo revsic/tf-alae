@@ -10,7 +10,7 @@ class MNIST:
     def rawdata(self, train=True):
         return self.x_train if train else self.x_test
 
-    def datasets(self, bsize=128, train=True):
+    def datasets(self, bsize=128, bufsiz=10000, train=True):
         return tf.data.Dataset.from_tensor_slices(self.rawdata(train)) \
-            .shuffle(10000) \
+            .shuffle(bufsiz) \
             .batch(bsize)
