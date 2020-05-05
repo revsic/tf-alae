@@ -15,16 +15,17 @@ class MlpAlae(ALAE):
 
         self.gamma = settings['gamma']
 
-        def seq(dims, input_dim):
+        def seq(dims, input_dim, activation=None):
             layer = tf.keras.Sequential([
                 tf.keras.layers.Dense(dim, activation='relu')
                 for dim in dims[:-1]])
-            layer.add(tf.keras.layers.Dense(dims[-1]))
+            layer.add(
+                tf.keras.layers.Dense(dims[-1], activation=activation))
             layer.build((None, input_dim))
             return layer
 
         self.f = seq(settings['f'], self.z_dim)
-        self.g = seq(settings['g'], self.latent_dim)
+        self.g = seq(settings['g'], self.latent_dim, tf.math.tanh)
         self.e = seq(settings['e'], self.output_dim)
         self.d = seq(settings['d'], self.latent_dim)
 
