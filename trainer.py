@@ -76,20 +76,20 @@ if __name__ == '__main__':
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    if not os.path.exists('./summary'):
-        os.mkdir('./summary')
+    if not os.path.exists('./summary/tanhoutput'):
+        os.mkdir('./summary/tanhoutput')
     
     if not os.path.exists('./ckpt'):
         os.mkdir('./ckpt')
 
-    trainer = Trainer('./summary', './ckpt/mlpalae')
+    trainer = Trainer('./summary/tanhoutput', './ckpt/tanhoutput')
     trainer.train(mlpalae, 600, mnist.datasets(), mnist.datasets(train=False))
 
 
 # [ ] 1. beta1=0
 # [ ] 2. layer 수 늘리기
 # [ ] 2.1. beta1=0, layer 수 늘리기
-# [ ] 3. output dist clipping 하기 (in train)
+# [x] 3. output dist clipping 하기 (in train)
 # [ ] 4. output disc clipping (only test)
 # [x] 4.1. output dist clipping + beta1=0 + layer 수 늘리기
 # [ ] 5. latent dim 128, gamma 10
