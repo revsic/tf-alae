@@ -9,11 +9,12 @@ from mlpalae import MlpAlae
 
 
 class Trainer:
-    def __init__(self, summary_path):
+    def __init__(self, summary_path, ckpt_path):
         train_path = os.path.join(summary_path, 'train')
         test_path = os.path.join(summary_path, 'test')
         self.train_summary = tf.summary.create_file_writer(train_path)
         self.test_summary = tf.summary.create_file_writer(test_path)
+        self.ckpt_path = ckpt_path
 
     def train(self, model, epochs, trainset, testset):
         step = 0
@@ -36,6 +37,8 @@ class Trainer:
 
             _, flat = model(datum)
             self.write_image(flat, step, train=False)
+
+            model.save_weights(self.ckpt_path)
 
     def write_summary(self, metrics, step, train=True):
         summary = self.train_summary if train else self.test_summary
@@ -72,5 +75,11 @@ if __name__ == '__main__':
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    trainer = Trainer('./summary')
+    if not os.path.exists('./summary'):
+        os.mkdir('./summary')
+    
+    if not os.path.exists('./ckpt'):
+        os.mkdir('./ckpt')
+
+    trainer = Trainer('./summary', './ckpt/mlpalae')
     trainer.train(mlpalae, 600, mnist.datasets(), mnist.datasets(train=False))
