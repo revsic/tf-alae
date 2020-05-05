@@ -49,7 +49,7 @@ class MlpAlae(ALAE):
     @tf.function
     def _disc_loss(self, z, x):
         with tf.GradientTape() as tape:
-            fakeloss = tf.reduce_mean(tf.math.softplus(self.fakepass(x)))
+            fakeloss = tf.reduce_mean(tf.math.softplus(self.fakepass(z)))
             realloss = tf.reduce_mean(tf.math.softplus(-self.realpass(x)))
 
         grad = tape.gradient(realloss, self.ed_var)
@@ -59,11 +59,11 @@ class MlpAlae(ALAE):
         return fakeloss + realloss + gradreg
 
     @tf.function
-    def _gen_loss(self, z, _):
+    def _gen_loss(self, z, _=None):
         return tf.reduce_mean(tf.math.softplus(-self.fakepass(z)))
 
     @tf.function
-    def _latent_loss(self, z, _):
+    def _latent_loss(self, z, _=None):
         latent = self.f(z)
         recovered = self.latentpass(z)
         return tf.reduce_mean(tf.square(latent - recovered))
@@ -87,10 +87,9 @@ class MlpAlae(ALAE):
         return z.numpy(), loss.numpy()
 
     def trainstep(self, x):
-        x = tf.reshape(x, (x.shape[0], -1))
         _, dloss = self._update(x, self._disc_loss, self.ed_var)
-        _, gloss = self.update(x, self._gen_loss, self.fg_var)
-        _, lloss = self.update(x, self._latent_loss, self.eg_var)
+        _, gloss = self._update(x, self._gen_loss, self.fg_var)
+        _, lloss = self._update(x, self._latent_loss, self.eg_var)
         return {
             'disc': dloss,
             'gen': gloss,
