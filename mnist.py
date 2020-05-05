@@ -5,7 +5,8 @@ class MNIST:
     def __init__(self):
         mnist = tf.keras.datasets.mnist
         (x_train, _), (x_test, _) = mnist.load_data()
-        self.x_train, self.x_test = x_train / 255., x_test / 255.
+        self.x_train = x_train / 127.5 - 1.
+        self.x_test = x_test / 127.5 - 1.
 
     def rawdata(self, train=True):
         return self.x_train if train else self.x_test
