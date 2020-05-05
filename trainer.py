@@ -48,11 +48,12 @@ class Trainer:
 
     def write_image(self, flat, step, train=True, name='image'):
         idx = np.random.randint(flat.shape[0])
+        image = tf.clip_by_value(flat[idx:idx + 1], 0, 1)
         summary = self.train_summary if train else self.test_summary
         with summary.as_default():
             tf.summary.image(
                 name,
-                tf.reshape(flat[idx:idx + 1], (1, 28, 28, 1)),
+                tf.reshape(image, (1, 28, 28, 1)),
                 step=step)
     
     def mean_metric(self, metrics):
