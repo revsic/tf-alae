@@ -95,3 +95,4 @@ if __name__ == '__main__':
 # [x] 4.1. output dist clipping + beta1=0 + layer 수 늘리기
 # [ ] 5. latent dim 128, gamma 10
 # [x] 5.1. latent=128, gamma=10, beta1=0, layers=3, clipping
+# [ ] 5.2. latent=128, gamma=10, beta1=0.9, layers=3, clipping
