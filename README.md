@@ -28,8 +28,16 @@ Jupyter notebook
 
 ![enumeration](./rsrc/enum.png)
 
-## Polymorph
+## Linear transform
 
 - two - three
 
 ![polymorph number two to three](./rsrc/two2three.png)
+
+- eight - nine
+
+![polymorph number eight to nine](./rsrc/eight2nine.png)
+
+- three - six
+
+![polymorph number three to six](./rsrc/three2six.png)
