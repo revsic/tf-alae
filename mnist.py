@@ -20,7 +20,7 @@ class MNIST:
             .shuffle(bufsiz) \
             .batch(bsize)
 
-    def cond_datasets(self, bsize=128, bufsiz=10000, train=True):
+    def cdatasets(self, bsize=128, bufsiz=10000, train=True):
         x, y = self.rawdata(train)
         data = np.concatenate([x.reshape(-1, 784), np.eye(10)[y]], axis=-1)
         return tf.data.Dataset.from_tensor_slices(x) \
