@@ -73,10 +73,13 @@ class Trainer:
 
 
 if __name__ == '__main__':
+    tf.random.set_seed(1234)
+    np.random.seed(1234)
+
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    modelname = 'lat50_gam100_sepopt'
+    modelname = 'lat50_gam100_sepopt_seed'
     if not os.path.exists('./summary/' + modelname):
         os.mkdir('./summary/' + modelname)
     
