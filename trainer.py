@@ -53,7 +53,7 @@ class Trainer:
         with summary.as_default():
             tf.summary.image(
                 name,
-                tf.reshape(image, (1, 28, 28, 1)),
+                tf.reshape(image[:784], (1, 28, 28, 1)),
                 step=step)
     
     def mean_metric(self, metrics):
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    modelname = 'basis'
+    modelname = 'cond'
     if not os.path.exists('./summary/' + modelname):
         os.mkdir('./summary/' + modelname)
     
@@ -84,7 +84,7 @@ if __name__ == '__main__':
         os.mkdir('./ckpt')
 
     trainer = Trainer('./summary/' + modelname, './ckpt/' + modelname)
-    trainer.train(mlpalae, 600, mnist.datasets(), mnist.datasets(train=False))
+    trainer.train(mlpalae, 600, mnist.cdatasets(), mnist.cdatasets(train=False))
 
 
 # [ ] 1. beta1=0
@@ -96,3 +96,5 @@ if __name__ == '__main__':
 # [ ] 5. latent dim 128, gamma 10
 # [x] 5.1. latent=128, gamma=10, beta1=0, layers=3, clipping
 # [ ] 5.2. latent=128, gamma=10, beta1=0.9, layers=3, clipping
+# [ ] 6. label condition
+# [ ] 6.1. latent=128, gamma=10, beta1=0.9, layers=3, clipping, labelcond
