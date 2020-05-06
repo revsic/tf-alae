@@ -109,6 +109,6 @@ class MlpAlae(ALAE):
             'e': [1024, 1024, latent_dim],
             'd': [1024, 1024, 1],
             'lr': 0.002,
-            'beta1': 0.0,
+            'beta1': 0.9,
             'beta2': 0.99,
         }
