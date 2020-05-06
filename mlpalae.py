@@ -98,7 +98,7 @@ class MlpAlae(ALAE):
         }
 
     @staticmethod
-    def default_setting(z_dim=128, latent_dim=128, output_dim=784):
+    def default_setting(z_dim=128, latent_dim=128, output_dim=784 + 10):
         return {
             'z_dim': z_dim,
             'latent_dim': latent_dim,
