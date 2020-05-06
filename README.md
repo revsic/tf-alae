@@ -4,10 +4,9 @@
 
 ## Learning curve
 
-<img src="./rsrc/disc.jpg" width="30%">
-<img src="./rsrc/gen.jpg" width="30%">
-
-<img src="./rsrc/latent.jpg" width="30%">
+![disc](./rsrc/disc.jpg)
+![gen](./rsrc/gen.jpg)
+![latent](./rsrc/latent.jpg)
 
 ## Autoencoded
 
