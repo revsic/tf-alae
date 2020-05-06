@@ -76,7 +76,7 @@ if __name__ == '__main__':
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    modelname = 'cond_light'
+    modelname = 'lat50_gam100_sepopt'
     if not os.path.exists('./summary/' + modelname):
         os.mkdir('./summary/' + modelname)
     
@@ -85,17 +85,3 @@ if __name__ == '__main__':
 
     trainer = Trainer('./summary/' + modelname, './ckpt/' + modelname)
     trainer.train(mlpalae, 600, mnist.cdatasets(), mnist.cdatasets(train=False))
-
-
-# [ ] 1. beta1=0
-# [ ] 2. layer 수 늘리기
-# [ ] 2.1. beta1=0, layer 수 늘리기
-# [x] 3. output dist clipping 하기 (in train)
-# [ ] 4. output disc clipping (only test)
-# [x] 4.1. output dist clipping + beta1=0 + layer 수 늘리기
-# [ ] 5. latent dim 128, gamma 10
-# [x] 5.1. latent=128, gamma=10, beta1=0, layers=3, clipping
-# [ ] 5.2. latent=128, gamma=10, beta1=0.9, layers=3, clipping
-# [ ] 6. label condition
-# [x] 6.1. latent=128, gamma=10, beta1=0.9, layers=3, clipping, labelcond
-# [ ] 6.2. latent=128, gamma=10, beta1=0.9, layers=3, light, clipping, labelcond
