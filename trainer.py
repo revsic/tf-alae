@@ -94,4 +94,4 @@ if __name__ == '__main__':
 # [ ] 4. output disc clipping (only test)
 # [x] 4.1. output dist clipping + beta1=0 + layer 수 늘리기
 # [ ] 5. latent dim 128, gamma 10
-# [ ] 5.1. latent=128, gamma=10, beta1=0, layers=3, clipping
+# [x] 5.1. latent=128, gamma=10, beta1=0, layers=3, clipping
