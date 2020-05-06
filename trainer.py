@@ -79,7 +79,7 @@ if __name__ == '__main__':
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    modelname = 'lat50_gam100_sepopt_seed'
+    modelname = 'lat50_gam100_sepopt_seed_beta0'
     if not os.path.exists('./summary/' + modelname):
         os.mkdir('./summary/' + modelname)
     
