@@ -76,13 +76,14 @@ if __name__ == '__main__':
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    if not os.path.exists('./summary/tanhoutput'):
-        os.mkdir('./summary/tanhoutput')
+    modelname = 'basis'
+    if not os.path.exists('./summary/' + modelname):
+        os.mkdir('./summary/' + modelname)
     
     if not os.path.exists('./ckpt'):
         os.mkdir('./ckpt')
 
-    trainer = Trainer('./summary/tanhoutput', './ckpt/tanhoutput')
+    trainer = Trainer('./summary/' + modelname, './ckpt/' + modelname)
     trainer.train(mlpalae, 600, mnist.datasets(), mnist.datasets(train=False))
 
 
