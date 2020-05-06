@@ -4,7 +4,26 @@ from alae import ALAE
 
 
 class MlpAlae(ALAE):
+    """ALAE with multi-layer perceptron architecture.
+    Attributes:
+        z_dim: int, dimension of the latent prior.
+        latent_dim: int, dimension of the latent vector.
+        output_dim: int, dimension of the output vector.
+        gamma: int, coefficient for gradient regularization term.
+        f, g, e, d: tf.keras.Model, ALAE component,
+            latent-map, generator, encoder, discriminator.
+        fakepass, realpass, latentpass: tf.keras.Model,
+            additional component for computing objectives.
+        ed_var, fg_var, eg_var: List[tf.Tensor], trainable variables.
+        ed_opt, fg_opt, eg_opt: tf.keras.optimizers.Optimizer,
+            optimizers for training step.
+    """
     def __init__(self, settings=None):
+        """Constructor.
+        Args:
+            settings: Dict[str, any], model settings,
+                reference `MlpAlae.default_setting`.
+        """
         super(MlpAlae, self).__init__()
         if settings is None:
             settings = self.default_setting()
@@ -46,17 +65,37 @@ class MlpAlae(ALAE):
             settings['lr'], settings['beta1'], settings['beta2'])
 
     def encoder(self, *args, **kwargs):
+        """Encode the input tensors to latent vectors.
+        Args:
+            _: tf.Tensor, [B, output_dim], input tensors.
+        Returns:
+            _: tf.Tensor, [B, latent_dim], latent vectors.
+        """
         return self.e(*args, **kwargs)
 
     def generator(self, *args, **kwargs):
+        """Generate output tensors from latent vectors.
+        Args:
+            _: tf.Tensor, [B, latent_dim], latent vectors.
+        Returns:
+            _: tf.Tensor, [B, output_dim], output tensors.
+        """
         return self.g(*args, **kwargs)
 
     @tf.function
     def _disc_loss(self, z, x):
+        """Compute discriminator loss.
+        Args:
+            z: tf.Tensor, [B, z_dim], latent prior.
+            x: tf.Tensor, [B, output_dim], output tensors.
+        Returns:
+            tf.Tensor, [], loss value.
+        """
         with tf.GradientTape() as tape:
             fakeloss = tf.reduce_mean(tf.math.softplus(self.fakepass(z)))
             realloss = tf.reduce_mean(tf.math.softplus(-self.realpass(x)))
 
+        # gradient regularizer
         grad = tape.gradient(realloss, self.ed_var)
         gradreg = self.gamma / 2 * tf.reduce_mean([
             tf.reduce_mean(tf.square(g)) for g in grad])
@@ -65,15 +104,35 @@ class MlpAlae(ALAE):
 
     @tf.function
     def _gen_loss(self, z, _=None):
+        """Compute generator loss.
+        Args:
+            z: tf.Tensor, [B, z_dim], latent prior.
+            _: unused, placeholder.
+        Returns:
+            tf.Tensor, [], generator loss value.
+        """
         return tf.reduce_mean(tf.math.softplus(-self.fakepass(z)))
 
     @tf.function
     def _latent_loss(self, z, _=None):
+        """Compute latent loss.
+        Args:
+            z: tf.Tensor, [B, z_dim], latent prior.
+            _: unused, placeholder.
+        Returns:
+            tf.Tensor, [], latent loss value.
+        """
         latent = self.f(z)
         recovered = self.latentpass(z)
         return tf.reduce_mean(tf.square(latent - recovered))
 
     def losses(self, x):
+        """Loss values for tensorboard summary.
+        Args:
+            x: tf.Tensor, [B, output_dim], output samples.
+        Returns:
+            Dict[str, np.array], loss values.
+        """
         bsize = x.shape[0]
         z = tf.random.normal((bsize, self.z_dim), 0, 1)
         return {
@@ -83,6 +142,17 @@ class MlpAlae(ALAE):
         }
 
     def _update(self, x, loss_fn, var, opt):
+        """Update weights with gradient and optimizer.
+        Args:
+            x: tf.Tensor, [B, output_dim], output samples.
+            loss_fn: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
+                loss function.
+            var: List[tf.Tensor], trainable variables.
+            opt: tf.keras.optimizers.Optimizer, keras optimizer.
+        Returns:
+            z: np.array, [B, z_dim], sampled latent prior.
+            loss: np.array, [], loss value.
+        """
         z = tf.random.normal((x.shape[0], self.z_dim), 0, 1)
         with tf.GradientTape() as tape:
             loss = loss_fn(z, x)
@@ -92,6 +162,12 @@ class MlpAlae(ALAE):
         return z.numpy(), loss.numpy()
 
     def trainstep(self, x):
+        """Optimize ALAE objective.
+        Args:
+            x: tf.Tensor, [B, output_dim], output samples.
+        Returns:
+            Dict[str, np.array], loss values.
+        """
         _, dloss = self._update(x, self._disc_loss, self.ed_var, self.ed_opt)
         _, gloss = self._update(x, self._gen_loss, self.fg_var, self.fg_opt)
         _, lloss = self._update(x, self._latent_loss, self.eg_var, self.eg_opt)
@@ -103,6 +179,8 @@ class MlpAlae(ALAE):
 
     @staticmethod
     def default_setting(z_dim=128, latent_dim=50, output_dim=784 + 10):
+        """Default settings.
+        """
         return {
             'z_dim': z_dim,
             'latent_dim': latent_dim,
