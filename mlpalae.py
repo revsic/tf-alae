@@ -38,7 +38,11 @@ class MlpAlae(ALAE):
         self.fg_var = self.f.trainable_variables + self.g.trainable_variables
         self.eg_var = self.e.trainable_variables + self.g.trainable_variables
 
-        self.optimizer = tf.keras.optimizers.Adam(
+        self.ed_opt = tf.keras.optimizers.Adam(
+            settings['lr'], settings['beta1'], settings['beta2'])
+        self.fg_opt = tf.keras.optimizers.Adam(
+            settings['lr'], settings['beta1'], settings['beta2'])
+        self.eg_opt = tf.keras.optimizers.Adam(
             settings['lr'], settings['beta1'], settings['beta2'])
 
     def encoder(self, *args, **kwargs):
@@ -78,19 +82,19 @@ class MlpAlae(ALAE):
             'latent': self._latent_loss(z).numpy(),
         }
 
-    def _update(self, x, loss_fn, var):
+    def _update(self, x, loss_fn, var, opt):
         z = tf.random.normal((x.shape[0], self.z_dim), 0, 1)
         with tf.GradientTape() as tape:
             loss = loss_fn(z, x)
         
         grad = tape.gradient(loss, var)
-        self.optimizer.apply_gradients(zip(grad, var))
+        opt.apply_gradients(zip(grad, var))
         return z.numpy(), loss.numpy()
 
     def trainstep(self, x):
-        _, dloss = self._update(x, self._disc_loss, self.ed_var)
-        _, gloss = self._update(x, self._gen_loss, self.fg_var)
-        _, lloss = self._update(x, self._latent_loss, self.eg_var)
+        _, dloss = self._update(x, self._disc_loss, self.ed_var, self.ed_opt)
+        _, gloss = self._update(x, self._gen_loss, self.fg_var, self.fg_opt)
+        _, lloss = self._update(x, self._latent_loss, self.eg_var, self.eg_opt)
         return {
             'disc': dloss,
             'gen': gloss,
@@ -98,16 +102,16 @@ class MlpAlae(ALAE):
         }
 
     @staticmethod
-    def default_setting(z_dim=128, latent_dim=128, output_dim=784 + 10):
+    def default_setting(z_dim=128, latent_dim=50, output_dim=784 + 10):
         return {
             'z_dim': z_dim,
             'latent_dim': latent_dim,
             'output_dim': output_dim,
-            'gamma': 10,
-            'f': [128, latent_dim],
-            'g': [512, 1024, output_dim],
-            'e': [512, 256, latent_dim],
-            'd': [128, 32, 1],
+            'gamma': 100,
+            'f': [1024, latent_dim],
+            'g': [1024, output_dim],
+            'e': [1024, latent_dim],
+            'd': [1024, 1],
             'lr': 0.002,
             'beta1': 0.9,
             'beta2': 0.99,
