@@ -55,7 +55,7 @@ class MlpAlae(ALAE):
 
         grad = tape.gradient(realloss, self.ed_var)
         gradreg = self.gamma / 2 * tf.reduce_mean([
-            tf.reduce_mean(tf.square(x)) for x in grad])
+            tf.reduce_mean(tf.square(g)) for g in grad])
 
         return fakeloss + realloss + gradreg
 
