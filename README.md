@@ -2,11 +2,20 @@
 
 (Unofficial) Tensorflow implementation of Adversarial Latent Autoencoder (ALAE, Pidhorskyi et al., 2020)
 
-## Learning curve
+## Usage
 
-![disc](./rsrc/disc.jpg)
-![gen](./rsrc/gen.jpg)
-![latent](./rsrc/latent.jpg)
+To train the mnist model
+```
+python trainer.py
+```
+
+To open tensorboard summary
+```
+tensorboard --logdir summary
+```
+
+Jupyter notebook
+- [mnist_expr.ipynb](./mnist_expr.ipynb): MNIST experiments.
 
 ## Autoencoded
 
