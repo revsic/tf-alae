@@ -76,7 +76,7 @@ if __name__ == '__main__':
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    modelname = 'cond'
+    modelname = 'cond_light'
     if not os.path.exists('./summary/' + modelname):
         os.mkdir('./summary/' + modelname)
     
@@ -97,4 +97,5 @@ if __name__ == '__main__':
 # [x] 5.1. latent=128, gamma=10, beta1=0, layers=3, clipping
 # [ ] 5.2. latent=128, gamma=10, beta1=0.9, layers=3, clipping
 # [ ] 6. label condition
-# [ ] 6.1. latent=128, gamma=10, beta1=0.9, layers=3, clipping, labelcond
+# [x] 6.1. latent=128, gamma=10, beta1=0.9, layers=3, clipping, labelcond
+# [ ] 6.2. latent=128, gamma=10, beta1=0.9, layers=3, light, clipping, labelcond
