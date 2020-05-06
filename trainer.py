@@ -79,7 +79,7 @@ if __name__ == '__main__':
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    modelname = 'lat50_gam10_sepopt_seed_beta0_epoch100'
+    modelname = 'lat50_gam10_sepopt_seed_beta0_epoch50'
     if not os.path.exists('./summary/' + modelname):
         os.mkdir('./summary/' + modelname)
     
@@ -87,4 +87,4 @@ if __name__ == '__main__':
         os.mkdir('./ckpt')
 
     trainer = Trainer('./summary/' + modelname, './ckpt/' + modelname)
-    trainer.train(mlpalae, 100, mnist.cdatasets(), mnist.cdatasets(train=False))
+    trainer.train(mlpalae, 50, mnist.cdatasets(), mnist.cdatasets(train=False))
