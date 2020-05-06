@@ -107,7 +107,7 @@ class MlpAlae(ALAE):
             'z_dim': z_dim,
             'latent_dim': latent_dim,
             'output_dim': output_dim,
-            'gamma': 100,
+            'gamma': 10,
             'f': [1024, latent_dim],
             'g': [1024, output_dim],
             'e': [1024, latent_dim],
