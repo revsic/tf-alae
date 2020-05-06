@@ -73,9 +73,9 @@ class MlpAlae(ALAE):
         bsize = x.shape[0]
         z = tf.random.normal((bsize, self.z_dim), 0, 1)
         return {
-            'disc': self._disc_loss(z, x),
-            'gen': self._gen_loss(z),
-            'latent': self._latent_loss(z),
+            'disc': self._disc_loss(z, x).numpy(),
+            'gen': self._gen_loss(z).numpy(),
+            'latent': self._latent_loss(z).numpy(),
         }
 
     def _update(self, x, loss_fn, var):
@@ -92,9 +92,9 @@ class MlpAlae(ALAE):
         _, gloss = self._update(x, self._gen_loss, self.fg_var)
         _, lloss = self._update(x, self._latent_loss, self.eg_var)
         return {
-            'disc': dloss.numpy(),
-            'gen': gloss.numpy(),
-            'latent': lloss.numpy(),
+            'disc': dloss,
+            'gen': gloss,
+            'latent': lloss,
         }
 
     @staticmethod
