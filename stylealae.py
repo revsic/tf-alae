@@ -15,7 +15,7 @@ class AffineTransform(tf.keras.Model):
         Returns:
             tf.Tensor, arbitary shape
         """
-        return x * self.weights + self.bias
+        return x * self.weight + self.bias
 
 
 class Normalize2D(tf.keras.Model):
@@ -30,7 +30,7 @@ class Normalize2D(tf.keras.Model):
         Returns:
             tf.Tensor, [B, H, W, C]
         """
-        mean, var = tf.nn.moments(x, axis=[1, 2], keepdims=True)
+        mean, var = tf.nn.moments(x, axes=[1, 2], keepdims=True)
         return (x - mean) / (tf.math.sqrt(var) + self.eps)
 
 
@@ -86,34 +86,29 @@ class Generator(tf.keras.Model):
                  init_channels,
                  max_channels,
                  num_layer,
-                 latent_dim,
                  out_channels):
         super(Generator, self).__init__()
         self.init_channels = init_channels
         self.max_channels = max_channels
         self.num_layer = num_layer
-        self.latent_dim = latent_dim
         self.out_channels = out_channels
 
         resolution = 4
         channels = self.init_channels * 2 ** (self.num_layer - 1)
-        in_dim = min(self.max_channels, channels)
+        out_dim = min(self.max_channels, channels)
         self.const = tf.Variable(
-            tf.ones([1, resolution, resolution, in_dim]),
+            tf.ones([1, resolution, resolution, out_dim]),
             dtype=tf.float32)
 
         self.blocks = []
         for i in range(self.num_layer):
-            out_dim = min(self.max_channels, channels)
-            self.blocks.append(
-                Generator.Block(in_dim,
-                                out_dim,
-                                i > 0,
-                                'repeat' if resolution < 128 else 'deconv'))
-
-            in_dim = out_dim
             channels //= 2
             resolution *= 2
+            out_dim = min(self.max_channels, channels)
+            self.blocks.append(
+                Generator.Block(out_dim,
+                                i > 0,
+                                'repeat' if resolution < 128 else 'deconv'))
 
         self.postconv = tf.keras.layers.Conv2D(self.out_channels, 1)
     
@@ -134,9 +129,7 @@ class Generator(tf.keras.Model):
         return self.postconv(x)
 
     class Block(tf.keras.Model):
-        def __init__(self, in_dim, out_dim, preconv, upsample):
-            super(Generator.Block, self).__init__()
-            self.in_dim = in_dim
+        def __init__(self, out_dim, preconv, upsample):
             self.out_dim = out_dim
             self.preconv = preconv
             self.upsample = upsample
@@ -148,16 +141,16 @@ class Generator(tf.keras.Model):
                             Repeat2D(2),
                             tf.keras.layers.Conv2D(
                                 self.out_dim,
-                                3,
-                                1,
+                                kernel_size=3,
+                                strides=1,
                                 padding='same',
                                 use_bias=False)])
                 elif self.upsample == 'deconv':
                     self.upsample_conv = \
                         tf.keras.layers.Conv2DTranspose(
                             self.out_dim,
-                            3,
-                            2,
+                            kernel_size=3,
+                            strides=2,
                             padding='same',
                             use_bias=False)
     
@@ -188,24 +181,24 @@ class Generator(tf.keras.Model):
 
             shape = tf.shape(x)
             # [1, Hx2, Wx2, 1]
-            noise = tf.random.normal([1, x[1], x[2], 1])
+            noise = tf.random.normal([1, shape[1], shape[2], 1])
             # [B, Hx2, Wx2, out_dim]
             x = self.leaky_relu(x + self.noise_affine1(noise))
             # [B, Hx2, Wx2, out_dim]
             x = self.normalize(x)
-            
+
             # [B, out_dim x 2]
             s1 = self.latent_proj1(s1)
             # [B, 2, out_dim]
             s1 = tf.reshape(s1, [-1, 2, self.out_dim])
             # [B, Hx2, Wx2, out_dim]
-            x = s1[: 0, None, None, :] + x * s1[:, 1, None, None, :]
+            x = s1[:, 0, None, None, :] + x * s1[:, 1, None, None, :]
 
             # [B, Hx2, Wx2, out_dim]
             x = self.conv(x)
 
             # [1, Hx2, Wx2, 1]
-            noise = tf.random.normal([1, x[1], x[2], 1])
+            noise = tf.random.normal([1, shape[1], shape[2], 1])
             # [B, Hx2, Wx2, out_dim]
             x = self.leaky_relu(x + self.noise_affine2(noise))
             # [B, Hx2, Wx2, out_dim]
@@ -222,10 +215,57 @@ class Generator(tf.keras.Model):
 
 
 class Encoder(tf.keras.Model):
-    def __init__(self):
+    def __init__(self,
+                 init_channels,
+                 max_channels,
+                 num_layer,
+                 latent_dim,
+                 out_channels):
         super(Encoder, self).__init__()
+        self.init_channels = init_channels
+        self.max_channels = max_channels
+        self.num_layer = num_layer
+        self.latent_dim = latent_dim
+        self.out_channels = out_channels
+
+        resolution = 4 * 2 ** self.num_layer
+        channels = self.init_channels
+        out_dim = min(self.max_channels, channels)
+        self.preconv = tf.keras.layers.Conv2D(out_dim, 1)
+
+        self.blocks = []
+        for i in range(self.num_layer):
+            channels *= 2
+            resolution //= 2
+            out_dim = min(self.max_channels, channels)
+            self.blocks.append(
+                Encoder.Block(out_dim,
+                              i == self.num_layer - 1,
+                              'pool' if resolution < 128 else 'conv'))
+
+        self.disc = tf.keras.layers.Dense(1)
+
+    class Block(tf.keras.Model):
+        def __init__(self, out_dim, last, downsample):
+            super(Encoder.Block, self).__init__()
+            self.out_dim = out_dim
+            self.last = last
+            self.downsample = downsample
+
+            self.preconv = tf.keras.layers.Conv2D(
+                
+            )
+
+            if self.last:
+                self.dense = tf.keras.layers.Dense(out_dim)
+            else:
+                if self.downsample == 'pool':
+                    self.downsample_conv = tf.keras.Sequential([
+                        tf.keras.layers.Conv2D(
+                            out_dim, 3, 1, padding='same', use_bias=False),
+                        tf.keras.layers.AveragePooling2D(2)])
+                else:
+                    self.downsample_conv = tf.keras.layers.Conv2D(
+                        out_dim, 3, 2, padding='same', use_bias=False)
 
 
-class Discriminator(tf.keras.Model):
-    def __init__(self):
-        super(Discriminator, self).__init__()
