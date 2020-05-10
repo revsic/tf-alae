@@ -10,46 +10,48 @@ class StyleAlae(ALAE):
     def __init__(self, settings):
         super(ALAE, self).__init__()
         self.settings = settings
-        self.latent_dim = self.settings['latent_dim']
-        self.num_layers = self.settings['num_layers']
-        self.map_num_layers = self.settings['map_num_layers']
-        self.init_channels = self.settings['init_channels']
-        self.max_channels = self.settings['max_channels']
-        self.out_channels = self.settings['out_channels']
+        self.prepare(self.settings['z_dim'],
+                     self.settings['gamma'],
+                     self.settings['learning_rate'],
+                     self.settings['beta1'],
+                     self.settings['beta2'])
 
-        self.latent_map = LatentMap(num_layer=self.map_num_layers,
-                                    z_dim=self.latent_dim,
-                                    latent_dim=self.latent_dim,
-                                    hidden_dim=self.latent_dim)
-        self.generator = Generator(init_channels=self.init_channels,
-                                   max_channels=self.max_channels,
-                                   num_layer=self.num_layers,
-                                   out_channels=self.out_channels)
-        self.encoder = Encoder(init_channels=self.init_channels,
-                               max_channels=self.max_channels,
-                               num_layer=self.num_layers,
-                               latent_dim=self.latent_dim)
-        self.discriminator = tf.keras.layers.Dense(1)
+    def mapper(self):
+        """Model for mpping latent from prior.
+        Returns:
+            tf.keras.Model: map prior to latent.
+        """
+        return LatentMap(num_layer=self.settings['map_num_layers'],
+                         z_dim=self.settings['latent_dim'],
+                         latent_dim=self.settings['latent_dim'],
+                         hidden_dim=self.settings['latent_dim'])
 
-        self.fakepass = tf.keras.Sequential([
-            self.latent_map, self.generator, self.encoder, self.discriminator])
-        self.realpass = tf.keras.Sequential([self.encoder, self.discriminator])
-        self.latentpass = tf.keras.Sequential([
-            self.latent_map, self.generator, self.encoder])
+    def generator(self):
+        """Model for generating data from encoded latent.
+        Returns:
+            tf.keras.Model: generate sample from encoded latent.
+        """
+        return Generator(init_channels=self.settings['init_channels'],
+                         max_channels=self.settings['max_channels'],
+                         num_layer=self.settings['num_layers'],
+                         out_channels=self.settings['out_channels'])
 
-        
+    def encoder(self):
+        """Model for encoding data to fixed length latent vector.
+        Returns:
+            tf.keras.Model: encode data to fixed length latent vector.
+        """
+        return Encoder(init_channels=self.settings['init_channels'],
+                       max_channels=self.settings['max_channels'],
+                       num_layer=self.settings['num_layers'],
+                       latent_dim=self.settings['latent_dim'])
 
-    def encoder(self, *args, **kwargs):
-        return self.encoder(*args, **kwargs)
-
-    def generator(self, *args, **kwargs):
-        return self.generator(*args, **kwargs)
-
-    def losses(self, x):
-        pass
-
-    def trainstep(self, x):
-        pass
+    def discriminator(self):
+        """Model for discriminating real sample from fake one.
+        Returns:
+            tf.keras.Model: discriminate real sample from fake one.
+        """
+        return tf.keras.layers.Dense(1)
 
     @staticmethod
     def default_setting():
@@ -60,4 +62,8 @@ class StyleAlae(ALAE):
             'init_channels': 32,
             'max_channels': 256,
             'out_channels': 3,
+            'lr': 0.002,
+            'beta1': 0.0,
+            'beta2': 0.99,
+            'gamma': 10,
         }
