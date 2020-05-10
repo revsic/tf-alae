@@ -28,17 +28,20 @@ class MNIST:
         return (self.x_train, self.y_train) \
             if train else (self.x_test, self.y_test)
 
-    def datasets(self, bsize=128, bufsiz=10000, train=True):
+    def datasets(self, bsize=128, bufsiz=10000, flatten=True, train=True):
         """Image dataset.
         Args:
             bsize: int, batch size.
             bufsiz: int, buffer size for shuffle.
+            flatten: bool, whether flatten image or not.
             train: bool, whether training mode or not.
         Returns:
             tf.data.Dataset, tensorflow dataset object,
                 Iterable[tf.Tensor=[B, 28, 28]], iterable.
         """
         x, _ = self.rawdata(train)
+        if flatten:
+            x = x.reshape(-1, 784)
         return tf.data.Dataset.from_tensor_slices(x) \
             .shuffle(bufsiz) \
             .batch(bsize)
