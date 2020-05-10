@@ -32,8 +32,8 @@ class Encoder(tf.keras.Model):
                               'pool' if resolution < 128 else 'conv'))
 
     def call(self, x):
-        bsize = x.shape[0]
-        styles = tf.zeros([bsize, self.latent_dim])
+        bsize = tf.shape(x)[0]
+        styles = tf.zeros([bsize, self.latent_dim], dtype=tf.float32)
 
         x = self.preconv(x)
         for block in self.blocks:
