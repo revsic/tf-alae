@@ -10,6 +10,12 @@ class ALAE(tf.keras.Model):
 
     def prepare(self, z_dim, gamma, learning_rate, beta1, beta2):
         """Prepare for training and inference.
+        Args:
+            z_dim: int, size of the latent prior.
+            gamma: float, coefficient for gradient penalty in loss term.
+            learning_rate: float, learning rate.
+            beta1: float, beta1 for adam optimizer.
+            beta2: flaot, beta2 for adam optimizer.
         """
         self.z_dim = z_dim
         self.gamma = gamma
