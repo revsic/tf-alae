@@ -4,8 +4,9 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from ..datasets.mnist import MNIST
-from ..models.mlpalae import MlpAlae
+from utils.trainer import Trainer
+from datasets.mnist import MNIST
+from models.mlpalae import MlpAlae
 
 
 def main(_):
@@ -16,7 +17,7 @@ def main(_):
     mnist = MNIST()
     mlpalae = MlpAlae()
 
-    modelname = 'lat50_gam10_sepopt_seed_beta0_epoch50'
+    modelname = 'baseline'
     if not os.path.exists('./summary/' + modelname):
         os.mkdir('./summary/' + modelname)
     
