@@ -36,7 +36,7 @@ class MlpAlae(ALAE):
         layer.build((None, input_dim))
         return layer
 
-    def mapper(self, *args, **kwargs):
+    def mapper(self):
         """Model for mapping latent from prior.
         Returns:
             tf.keras.Model: tf.Tensor[B, z_dim] -> tf.Tensor[B, latent_dim],
@@ -44,7 +44,7 @@ class MlpAlae(ALAE):
         """
         return self._seq(self.settings['f'], self.z_dim)
 
-    def generator(self, *args, **kwargs):
+    def generator(self):
         """Model for generating data from encoded latent.
         Returns:
             tf.keras.Model: tf.Tensor[B, latent_dim] -> tf.Tensor[B, output_dim],
@@ -52,7 +52,7 @@ class MlpAlae(ALAE):
         """
         return self._seq(self.settings['g'], self.latent_dim)
 
-    def encoder(self, *args, **kwargs):
+    def encoder(self):
         """Model for encoding data to fixed length latent vector.
         Returns:
             tf.keras.Model: tf.Tensor[B, output_dim] -> tf.Tensor[B, latent_dim]
@@ -60,7 +60,7 @@ class MlpAlae(ALAE):
         """
         return self._seq(self.settings['e'], self.output_dim)
 
-    def discriminator(self, *args, **kwargs):
+    def discriminator(self):
         """Model for discriminating real sample from fake one.
         Returns:
             tf.keras.Model: tf.Tensor[B, latent_dim] -> tf.Tensor[B, 1]
