@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from alae import ALAE
+from ..alae import ALAE
 
 
 class MlpAlae(ALAE):
