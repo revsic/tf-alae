@@ -101,7 +101,7 @@ class ALAE(tf.keras.Model):
         Returns:
             tf.Tensor, [], latent loss value.
         """
-        latent = self.f(z)
+        latent = self.map(z)
         recovered = self.latentpass(z)
         return tf.reduce_mean(tf.square(latent - recovered))
 
