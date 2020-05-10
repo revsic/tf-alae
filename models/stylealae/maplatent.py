@@ -2,10 +2,9 @@ import tensorflow as tf
 
 
 class LatentMap(tf.keras.Model):
-    def __init__(self, num_layer, z_dim, latent_dim, hidden_dim):
+    def __init__(self, num_layer, latent_dim, hidden_dim):
         super(LatentMap, self).__init__()
         self.num_layer = num_layer
-        self.z_dim = z_dim
         self.latent_dim = latent_dim
         self.hidden_dim = hidden_dim
 
@@ -16,8 +15,6 @@ class LatentMap(tf.keras.Model):
 
         self.blocks.add(
             tf.keras.layers.Dense(self.latent_dim))
-
-        self.blocks.build([None, self.z_dim])
 
     def call(self, z):
         """
