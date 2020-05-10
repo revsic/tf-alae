@@ -46,12 +46,13 @@ class Generator(tf.keras.Model):
         x = self.const
         for block in self.blocks:
             # [B, S', S', C] where S' = 4 * 2 ** i, C = in_dim / (2 ** (i + 1))
-            x = block(x)
+            x = block(x, styles, styles)
         # [B, S, S, out_channels]
         return self.postconv(x)
 
     class Block(tf.keras.Model):
         def __init__(self, out_dim, preconv, upsample):
+            super(Generator.Block, self).__init__()
             self.out_dim = out_dim
             self.preconv = preconv
             self.upsample = upsample
