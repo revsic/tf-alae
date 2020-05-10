@@ -28,6 +28,15 @@ class MlpAlae(ALAE):
                      settings['beta2'])
 
     def _seq(self, dims, input_dim, activation=tf.nn.relu):
+        """Construct MLP architecture.
+        Args:
+            dims: List[int], number of hidden units in layers.
+            input_dim: int, input size.
+            activation: Callable[[tf.Tensor], tf.Tensor],
+                shape-preserving activation.
+        Returns:
+            tf.keras.Sequential, built sequential MLP model.
+        """
         layer = tf.keras.Sequential([
             tf.keras.layers.Dense(dim, activation=activation)
             for dim in dims[:-1]])
