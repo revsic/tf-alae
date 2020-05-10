@@ -17,14 +17,14 @@ class ALAE(tf.keras.Model):
         self.map = self.mapper()
         self.gen = self.generator()
         self.enc = self.encoder()
-        self.dec = self.discriminator()
+        self.disc = self.discriminator()
 
         self.fakepass = tf.keras.Sequential([
-            self.map, self.gen, self.enc, self.dec])
-        self.realpass = tf.keras.Sequential([self.enc, self.dec])
+            self.map, self.gen, self.enc, self.disc])
+        self.realpass = tf.keras.Sequential([self.enc, self.disc])
         self.latentpass = tf.keras.Sequential([self.map, self.gen, self.enc])
 
-        self.ed_var = self.enc.trainable_variables + self.dec.trainable_variables
+        self.ed_var = self.enc.trainable_variables + self.disc.trainable_variables
         self.fg_var = self.map.trainable_variables + self.gen.trainable_variables
         self.eg_var = self.enc.trainable_variables + self.gen.trainable_variables
 
