@@ -8,14 +8,12 @@ class Encoder(tf.keras.Model):
                  init_channels,
                  max_channels,
                  num_layer,
-                 latent_dim,
-                 out_channels):
+                 latent_dim):
         super(Encoder, self).__init__()
         self.init_channels = init_channels
         self.max_channels = max_channels
         self.num_layer = num_layer
         self.latent_dim = latent_dim
-        self.out_channels = out_channels
 
         resolution = 4 * 2 ** self.num_layer
         channels = self.init_channels
