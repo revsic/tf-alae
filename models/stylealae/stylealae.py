@@ -19,7 +19,7 @@ class StyleAlae(ALAE):
         self.binder = Binder(self.enc, self.disc)
         self.fakepass = tf.keras.Sequential([self.map, self.gen, self.binder])
         self.realpass = self.binder
-        self.latentpas = self.encode
+        self.latentpass = self.encode
 
     def encode(self, *args, **kwargs):
         """Encode the input tensors to latent vectors.
