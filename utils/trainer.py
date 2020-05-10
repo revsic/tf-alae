@@ -4,9 +4,6 @@ import numpy as np
 import tensorflow as tf
 import tqdm
 
-from mnist import MNIST
-from mlpalae import MlpAlae
-
 
 class Trainer:
     """ALAE trainer, now just for MNIST and MLP-ALAE.
