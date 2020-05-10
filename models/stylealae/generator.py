@@ -24,13 +24,13 @@ class Generator(tf.keras.Model):
 
         self.blocks = []
         for i in range(self.num_layer):
-            channels //= 2
-            resolution *= 2
             out_dim = min(self.max_channels, channels)
             self.blocks.append(
                 Generator.Block(out_dim,
                                 i > 0,
                                 'repeat' if resolution < 128 else 'deconv'))
+            channels //= 2
+            resolution *= 2
 
         self.postconv = tf.keras.layers.Conv2D(self.out_channels, 1)
     
