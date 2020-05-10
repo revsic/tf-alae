@@ -99,11 +99,11 @@ class StyleAlae(ALAE):
     def default_setting():
         return {
             'latent_dim': 256,
-            'num_layers': 3,
+            'num_layers': 4,
             'map_num_layers': 5,
             'init_channels': 32,
             'max_channels': 256,
-            'out_channels': 3,
+            'out_channels': 1,
             'lr': 0.002,
             'beta1': 0.0,
             'beta2': 0.99,
