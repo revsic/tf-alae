@@ -35,6 +35,16 @@ class StyleAlae(ALAE):
         self.realpass = self.binder
         self.latentpass = tf.keras.Sequential([
             self.map, self.gen, self.styleonly])
+        
+        style_variables = []
+        for block in self.enc.blocks:
+            style_variables += [
+                x.name for x in block.style_proj1.trainable_variables]
+            style_variables += [
+                x.name for x in block.style_proj2.trainable_variables]
+
+        self.ed_var = [
+            var for var in self.ed_var if var.name not in style_variables]
 
     def encode(self, *args, **kwargs):
         """Encode the input tensors to latent vectors.
