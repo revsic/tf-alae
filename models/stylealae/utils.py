@@ -46,7 +46,7 @@ class Repeat2D(tf.keras.Model):
         Returns:
             tf.Tensor, [B, H x factor, W x factor, C]
         """
-        shape = tf.shape(x)
+        _, h, w, c = x.shape
         x = x[:, :, None, :, None, :]
         x = tf.tile(x, [1, 1, self.factor, 1, self.factor, 1])
-        return tf.reshape(x, [shape[0], shape[1] * self.factor, shape[2] * self.factor, shape[3]])
+        return tf.reshape(x, [-1, h * self.factor, w * self.factor, c])
