@@ -6,7 +6,7 @@ import tqdm
 
 
 class Trainer:
-    """ALAE trainer, now just for MNIST and MLP-ALAE.
+    """ALAE trainer.
     """
     def __init__(self, summary_path, ckpt_path):
         train_path = os.path.join(summary_path, 'train')
@@ -62,7 +62,7 @@ class Trainer:
     def write_image(self, flat, step, train=True, name='image'):
         """Write image to the tensorboard summary.
         Args:
-            flat: tf.Tensor, [B, 784 + alpha], autoencoded image.
+            flat: tf.Tensor, [B, ...], autoencoded image.
             step: int, current step.
             train: bool, whether in training phase or test phase.
             name: str, image name for tensorboard.
@@ -72,11 +72,8 @@ class Trainer:
         summary = self.train_summary if train else self.test_summary
         with summary.as_default():
             # write tensorboard summary
-            tf.summary.image(
-                name,
-                tf.reshape(flat[idx], (1, 28, 28, 1)),
-                step=step)
-    
+            tf.summary.image(name, flat[idx], step=step)
+
     def mean_metric(self, metrics):
         """Compute mean of the metrics.
         Args:
