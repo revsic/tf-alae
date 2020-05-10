@@ -16,6 +16,21 @@ class StyleAlae(ALAE):
                      self.settings['beta1'],
                      self.settings['beta2'])
 
+        self.binder = Binder(self.enc, self.disc)
+        self.fakepass = tf.keras.Sequential([self.map, self.gen, self.binder])
+        self.realpass = self.binder
+        self.latentpas = self.encode
+
+    def encode(self, *args, **kwargs):
+        """Encode the input tensors to latent vectors.
+        Args:
+            _: tf.Tensor, [B, ...], input tensors.
+        Returns:
+            _: tf.Tensor, [B, latent_dim], latent vectors.
+        """
+        x, style = self.enc(*args, **kwargs)
+        return style
+
     def mapper(self):
         """Model for mpping latent from prior.
         Returns:
@@ -67,3 +82,13 @@ class StyleAlae(ALAE):
             'beta2': 0.99,
             'gamma': 10,
         }
+
+    class Binder(tf.keras.Model):
+        def __init__(self, encoder, discriminator):
+            super(Binder, self).__init__()
+            self.encoder = encoder
+            self.discriminator = discriminator
+        
+        def call(self, x):
+            x, style = self.encoder(x)
+            return self.discriminator(x)
