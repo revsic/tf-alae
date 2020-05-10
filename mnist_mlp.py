@@ -17,9 +17,39 @@ PARSER.add_argument('--epochs', default=50, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
 
 
+class MnistAlae(MlpAlae):
+    """MLP-ALAE for MNIST dataset.
+    """
+    def __init__(self, settings=None):
+        super(MnistAlae, self).__init__(settings)
+    
+    def encode(self, x):
+        """Encode the input tensors to latent vectors.
+            + flatten inputs.
+        Args:
+            _: tf.Tensor, [B, ...], input tensors.
+        Returns:
+            _: tf.Tensor, [B, latent_dim], latent vectors.
+        """
+        x = tf.reshape(x, [x.shape[0], -1])
+        return super().encode(x)
+
+    def generate(self, z):
+        """Generate output tensors from latent vectors.
+            + denormalize and reshape to image.
+        Args:
+            _: tf.Tensor, [B, latent_dim], latent vectors.
+        Returns:
+            _: tf.Tensor, [B, ...], output tensors.
+        """
+        x = super().generate(z)
+        x = tf.clip_by_value(x[:, :784], -1, 1)
+        return tf.reshape(x, [-1, 28, 28])
+
+
 def train(args):
     mnist = MNIST()
-    mlpalae = MlpAlae()
+    mlpalae = MnistAlae()
 
     modelname = args.name
     summary_path = os.path.join(args.summarydir, modelname)
