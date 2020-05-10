@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from ..alae import ALAE
+from .alae import ALAE
 
 
 class MlpAlae(ALAE):
@@ -15,7 +15,8 @@ class MlpAlae(ALAE):
         super(MlpAlae, self).__init__()
         if settings is None:
             settings = self.default_setting()
-
+        
+        self.settings = settings
         self.z_dim = settings['z_dim']
         self.latent_dim = settings['latent_dim']
         self.output_dim = settings['output_dim']
@@ -49,7 +50,7 @@ class MlpAlae(ALAE):
             tf.keras.Model: tf.Tensor[B, latent_dim] -> tf.Tensor[B, output_dim],
                 generate sample from encoded latent.
         """
-        raise self._seq(self.settings['g'], self.latent_dim)
+        return self._seq(self.settings['g'], self.latent_dim)
 
     def encoder(self, *args, **kwargs):
         """Model for encoding data to fixed length latent vector.
@@ -65,7 +66,7 @@ class MlpAlae(ALAE):
             tf.keras.Model: tf.Tensor[B, latent_dim] -> tf.Tensor[B, 1]
                 discriminate real sample from fake one.
         """
-        raise self._seq(self.settings['d'], self.latent_dim)
+        return self._seq(self.settings['d'], self.latent_dim)
 
     @staticmethod
     def default_setting(z_dim=128, latent_dim=50, output_dim=784 + 10):
