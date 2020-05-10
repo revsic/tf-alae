@@ -24,11 +24,11 @@ def train(args):
     modelname = args.name
     summary_path = os.path.join(args.summarydir, modelname)
     if not os.path.exists(summary_path):
-        os.mkdir(summary_path)
+        os.makedirs(summary_path)
     
     ckpt_path = os.path.join(args.ckptdir, modelname)
     if not os.path.exists(args.ckptdir):
-        os.mkdir(args.ckptdir)
+        os.makedirs(args.ckptdir)
 
     trainer = Trainer(summary_path, ckpt_path)
     trainer.train(mlpalae, args.epochs, mnist.cdatasets(), mnist.cdatasets(train=False))
