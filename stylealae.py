@@ -145,8 +145,8 @@ class Generator(tf.keras.Model):
                 if self.upsample == 'repeat':
                     self.upsample_conv = \
                         tf.keras.Sequential([
-                            Generator.Repeat(2),
-                            tf.keras.layers.Conv2d(
+                            Repeat2D(2),
+                            tf.keras.layers.Conv2D(
                                 self.out_dim,
                                 3,
                                 1,
