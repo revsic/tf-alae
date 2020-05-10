@@ -72,7 +72,7 @@ class Trainer:
         summary = self.train_summary if train else self.test_summary
         with summary.as_default():
             # write tensorboard summary
-            tf.summary.image(name, flat[idx], step=step)
+            tf.summary.image(name, flat[idx:idx + 1], step=step)
 
     def mean_metric(self, metrics):
         """Compute mean of the metrics.
