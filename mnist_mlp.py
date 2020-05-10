@@ -44,7 +44,7 @@ class MnistAlae(MlpAlae):
         """
         x = super().generate(z)
         x = tf.clip_by_value(x[:, :784], -1, 1)
-        return tf.reshape(x, [-1, 28, 28])
+        return tf.reshape(x, [-1, 28, 28, 1])
 
 
 def train(args):
