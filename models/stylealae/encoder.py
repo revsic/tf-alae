@@ -15,7 +15,7 @@ class Encoder(tf.keras.Model):
         self.num_layer = num_layer
         self.latent_dim = latent_dim
 
-        resolution = 4 * 2 ** self.num_layer
+        resolution = 4 * 2 ** (self.num_layer - 1)
         channels = self.init_channels
         out_dim = min(self.max_channels, channels)
         self.preconv = tf.keras.layers.Conv2D(out_dim, 1)
@@ -78,7 +78,7 @@ class Encoder(tf.keras.Model):
                 style1: tf.Tensor, [B, latent_dim]
                 style2: tf.Tensor, [B, latent_dim]
             """
-            if not self.last:
+            if self.preconv:
                 # [B, H/2, W/2, out_dim]
                 x = self.downsample_conv(x)
                 x = self.leaky_relu(x)
