@@ -17,6 +17,24 @@ PARSER.add_argument('--epochs', default=50, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
 
 
+class StyleMNIST(StyleAlae):
+    """MLP-ALAE for MNIST dataset.
+    """
+    def __init__(self, settings=None):
+        super(StyleMNIST, self).__init__(settings)
+
+    def generate(self, z):
+        """Generate output tensors from latent vectors.
+            + denormalize and reshape to image.
+        Args:
+            _: tf.Tensor, [B, latent_dim], latent vectors.
+        Returns:
+            _: tf.Tensor, [B, 32, 32, 1], output tensors.
+        """
+        x = super().generate(z)
+        return tf.clip_by_value(x, -1, 1)
+
+
 def train(args):
     mnist = MNIST()
     mlpalae = StyleAlae()
