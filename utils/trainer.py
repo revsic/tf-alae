@@ -28,7 +28,6 @@ class Trainer:
             # training phase
             for datum in trainset:
                 step += 1
-                datum = tf.reshape(datum, (datum.shape[0], -1))
                 losses = model.trainstep(datum)
                 self.write_summary(losses, step)
 
@@ -38,7 +37,6 @@ class Trainer:
             # test phase
             metrics = []
             for datum in testset:
-                datum = tf.reshape(datum, (datum.shape[0], -1))
                 metrics.append(model.losses(datum))
 
             self.write_summary(self.mean_metric(metrics), step, train=False)
@@ -71,14 +69,12 @@ class Trainer:
         """
         # random index
         idx = np.random.randint(flat.shape[0])
-        # denormalize image
-        image = tf.clip_by_value(flat[idx], -1, 1)
         summary = self.train_summary if train else self.test_summary
         with summary.as_default():
             # write tensorboard summary
             tf.summary.image(
                 name,
-                tf.reshape(image[:784], (1, 28, 28, 1)),
+                tf.reshape(flat[idx], (1, 28, 28, 1)),
                 step=step)
     
     def mean_metric(self, metrics):
