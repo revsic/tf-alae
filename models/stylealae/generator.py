@@ -18,9 +18,7 @@ class Generator(tf.keras.Model):
         resolution = 4
         channels = self.init_channels * 2 ** (self.num_layer - 1)
         out_dim = min(self.max_channels, channels)
-        self.const = tf.Variable(
-            tf.ones([1, resolution, resolution, out_dim]),
-            dtype=tf.float32)
+        self.const = tf.ones([1, resolution, resolution, out_dim])
 
         self.blocks = []
         for i in range(self.num_layer):
