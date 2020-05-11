@@ -13,7 +13,7 @@ PARSER.add_argument('option', type=str, default='train')
 PARSER.add_argument('--name', default='style_mnist')
 PARSER.add_argument('--summarydir', default='./summary')
 PARSER.add_argument('--ckptdir', default='./ckpt')
-PARSER.add_argument('--epochs', default=50, type=int)
+PARSER.add_argument('--epochs', default=10, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
 
 
@@ -42,7 +42,7 @@ class StyleMNIST(StyleAlae):
         return {
             'latent_dim': 50,
             'num_layers': 4,
-            'map_num_layers': 5,
+            'map_num_layers': 3,
             'init_channels': 4,
             'max_channels': 256,
             'out_channels': 1,
