@@ -15,14 +15,16 @@ tensorboard --logdir summary
 ```
 
 Jupyter notebook
-- [mnist_expr.ipynb](./mnist_expr.ipynb): MNIST experiments.
+- [mnist_expr.ipynb](./experiments/mnist_expr.ipynb): MLP-MNIST experiments.
+- [mnist_stylealae.ipynb](./experiments/mnist_stylealae.ipynb): StyleALAE MNIST experiments.
 
 ## Structure
 
-- [alae.py](./alae.py): Abstracted ALAE object.
-- [mlpalae.py](./mlpalae.py): MLP-ALAE implementation.
-- [trainer.py](./trainer.py): MLP-ALAE trainer.
-- [mnist.py](./mnist.py): MNIST wrapper.
+- [alae.py](./models/alae.py): Abstracted ALAE object.
+- [mlpalae.py](./models/mlpalae.py): MLP-ALAE implementation.
+- [stylealae.py](./models/stylealae/stylealae.py): StyleALAE implementation.
+- [trainer.py](./utils/trainer.py): MLP-ALAE trainer.
+- [mnist.py](./datasets/mnist.py): MNIST wrapper.
 
 ## Autoencoded
 
