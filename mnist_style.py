@@ -21,6 +21,9 @@ class StyleMNIST(StyleAlae):
     """MLP-ALAE for MNIST dataset.
     """
     def __init__(self, settings=None):
+        if settings is None:
+            settings = StyleMNIST.default_setting()
+
         super(StyleMNIST, self).__init__(settings)
 
     def generate(self, z):
@@ -34,10 +37,25 @@ class StyleMNIST(StyleAlae):
         x = super().generate(z)
         return tf.clip_by_value(x, -1, 1)
 
+    @staticmethod
+    def default_setting():
+        return {
+            'latent_dim': 50,
+            'num_layers': 4,
+            'map_num_layers': 5,
+            'init_channels': 4,
+            'max_channels': 256,
+            'out_channels': 1,
+            'lr': 1e-4,
+            'beta1': 0.0,
+            'beta2': 0.99,
+            'gamma': 10,
+        }
+
 
 def train(args):
     mnist = MNIST()
-    mlpalae = StyleAlae()
+    mlpalae = StyleMNIST()
 
     modelname = args.name
     summary_path = os.path.join(args.summarydir, modelname)
