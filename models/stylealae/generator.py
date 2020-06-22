@@ -39,6 +39,7 @@ class Generator(tf.keras.Model):
         Returns:
             tf.Tensor, [B, S, S, out_channels],
                 where S = 4 * 2 ** (num_layer - 1)
+                        = 2 ** (num_layer + 1)
         """
         # [B, 4, 4, in_dim]
         x = self.const
