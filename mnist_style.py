@@ -55,7 +55,7 @@ class StyleMNIST(StyleAlae):
 
 def train(args):
     mnist = MNIST()
-    mlpalae = StyleMNIST()
+    stylealae = StyleMNIST()
 
     modelname = args.name
     summary_path = os.path.join(args.summarydir, modelname)
@@ -68,7 +68,7 @@ def train(args):
 
     trainer = Trainer(summary_path, ckpt_path)
     trainer.train(
-        mlpalae,
+        stylealae,
         args.epochs,
         mnist.datasets(padding=2, flatten=False),
         mnist.datasets(padding=2, flatten=False, train=False))
