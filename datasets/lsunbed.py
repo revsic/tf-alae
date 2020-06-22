@@ -46,7 +46,7 @@ class LsunBed:
     def denormalize(img):
         return (img + 1) * 127.5
 
-    def datasets(self, bsize, bufsiz):
+    def datasets(self, bsize=128, bufsiz=10000):
         return tf.data.Dataset.from_generator(self.reader, np.float32) \
             .shuffle(bufsiz) \
             .batch(bsize)
