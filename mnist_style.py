@@ -18,7 +18,7 @@ PARSER.add_argument('--seed', default=1234, type=int)
 
 
 class StyleMNIST(StyleAlae):
-    """MLP-ALAE for MNIST dataset.
+    """Style-ALAE for MNIST dataset.
     """
     def __init__(self, settings=None):
         if settings is None:
