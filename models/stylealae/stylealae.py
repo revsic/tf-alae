@@ -95,11 +95,7 @@ class StyleAlae(ALAE):
         Returns:
             tf.keras.Model: discriminate real sample from fake one.
         """
-        disc = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(1, 1, use_bias=False),
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(1)])
-        
+        disc = tf.keras.layers.Conv2D(1, 1, use_bias=False)
         channels = min(
             self.max_channels, self.init_channels * 2 ** self.num_layer)
         disc.build((None, 4, 4, channels))
