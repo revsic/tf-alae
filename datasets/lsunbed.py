@@ -57,7 +57,7 @@ class LsunBed:
         """
         return img / 127.5 - 1.
 
-    def datasets(self, bsize=16, bufsiz=10000):
+    def datasets(self, bsize=8, bufsiz=10000):
         """Image dataset.
         Args:
             bsize: int, batch size.
