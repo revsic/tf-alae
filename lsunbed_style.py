@@ -14,6 +14,7 @@ PARSER.add_argument('--name', default='style_lsunbed')
 PARSER.add_argument('--summarydir', default='./summary')
 PARSER.add_argument('--ckptdir', default='./ckpt')
 PARSER.add_argument('--epochs', default=10, type=int)
+PARSER.add_argument('--ckpt_interval', default=5000, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
 PARSER.add_argument('--dataset', default='D:\\bedroom_train_lmdb\\bedroom_train_lmdb')
 PARSER.add_argument('--evalset', default='D:\\bedroom_val_lmdb\\bedroom_val_lmdb')
@@ -69,7 +70,7 @@ def train(args):
     if not os.path.exists(args.ckptdir):
         os.makedirs(args.ckptdir)
 
-    trainer = Trainer(summary_path, ckpt_path)
+    trainer = Trainer(summary_path, ckpt_path, args.ckpt_interval)
     trainer.train(
         stylealae,
         args.epochs,
