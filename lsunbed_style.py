@@ -43,13 +43,13 @@ class StyleLsunBed(StyleAlae):
     @staticmethod
     def default_setting():
         return {
-            'latent_dim': 128,
+            'latent_dim': 512,
             'num_layers': 7,
-            'map_num_layers': 5,
-            'init_channels': 4,
-            'max_channels': 256,
+            'map_num_layers': 8,
+            'init_channels': 32,
+            'max_channels': 512,
             'out_channels': 3,
-            'lr': 1e-4,
+            'lr': 1e-3,
             'beta1': 0.0,
             'beta2': 0.99,
             'gamma': 10,
