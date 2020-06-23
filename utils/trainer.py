@@ -8,12 +8,13 @@ import tqdm
 class Trainer:
     """ALAE trainer.
     """
-    def __init__(self, summary_path, ckpt_path):
+    def __init__(self, summary_path, ckpt_path, ckpt_interval=None):
         train_path = os.path.join(summary_path, 'train')
         test_path = os.path.join(summary_path, 'test')
         self.train_summary = tf.summary.create_file_writer(train_path)
         self.test_summary = tf.summary.create_file_writer(test_path)
         self.ckpt_path = ckpt_path
+        self.ckpt_interval = ckpt_interval
 
     def train(self, model, epochs, trainset, testset):
         """Train ALAE model with given datasets.
@@ -30,6 +31,13 @@ class Trainer:
                 step += 1
                 losses = model.trainstep(datum)
                 self.write_summary(losses, step)
+
+                if self.ckpt_interval is not None and \
+                        step % self.ckpt_interval == 0:
+                    # if training set is too large
+                    _, flat = model(datum)
+                    self.write_image(flat, step, train=False)
+                    model.save_weights(self.ckpt_path)
 
             _, flat = model(datum)
             self.write_image(flat, step)
