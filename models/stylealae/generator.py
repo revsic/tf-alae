@@ -124,6 +124,6 @@ class Generator(tf.keras.Model):
             # [B, 2, out_dim]
             s2 = tf.reshape(s2, [-1, 2, self.out_dim])
             # [B, Hx2, Wx2, out_dim]
-            x = s2[:, 0, None, None, :] + x * s1[:, 1, None, None, :]
+            x = s2[:, 0, None, None, :] + x * s2[:, 1, None, None, :]
 
             return x
