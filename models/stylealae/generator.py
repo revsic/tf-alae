@@ -4,11 +4,20 @@ from .utils import AffineTransform, Normalize2D, Repeat2D
 
 
 class Generator(tf.keras.Model):
+    """Generate image from style vector.
+    """
     def __init__(self,
                  init_channels,
                  max_channels,
                  num_layer,
                  out_channels):
+        """Initializer.
+        Args:
+            init_channels: int, number of the channels of global latent.
+            max_channels: int, maximum channels of the feature map.
+            num_layer: int, number of the layers, it determines the size of the image.
+            out_channels: int, number of the image channels, 3 for rgb, 1 for gray-scale.
+        """
         super(Generator, self).__init__()
         self.init_channels = init_channels
         self.max_channels = max_channels
@@ -33,13 +42,12 @@ class Generator(tf.keras.Model):
         self.postconv = tf.keras.layers.Conv2D(self.out_channels, 1)
     
     def call(self, styles):
-        """
+        """Generate image.
         Args:
-            styles: tf.Tensor, [B, latent_dim]
+            styles: tf.Tensor, [B, latent_dim], style vector.
         Returns:
-            tf.Tensor, [B, S, S, out_channels],
-                where S = 4 * 2 ** (num_layer - 1)
-                        = 2 ** (num_layer + 1)
+            tf.Tensor, [B, S, S, out_channels], generated image.
+                where S = 2 ** (num_layer + 1).
         """
         # [B, 4, 4, in_dim]
         x = self.const
@@ -50,7 +58,17 @@ class Generator(tf.keras.Model):
         return self.postconv(x)
 
     class Block(tf.keras.Model):
+        """Generator block for progressive growing.
+        """
         def __init__(self, out_dim, preconv, upsample):
+            """Initializer.
+            Args:
+                out_dim: int, number of channels of output feature map.
+                preconv: bool, whether run convolution for upsampling.
+                upsample: str, upsampling policy for pre-convolution.
+                    - repeat: (2x2, repeat)-upsample -> (3x3, stride=1)-conv
+                    - deconv: (3x3, stride=2)-conv2d transpose
+            """
             super(Generator.Block, self).__init__()
             self.out_dim = out_dim
             self.preconv = preconv
@@ -82,13 +100,13 @@ class Generator(tf.keras.Model):
             self.latent_proj2 = tf.keras.layers.Dense(self.out_dim * 2)
 
         def call(self, x, s1, s2):
-            """
+            """Generate next level feature map.
             Args:
-                x: tf.Tensor, [B, H, W, in_dim]
-                s1: tf.Tensor, [B, latent_dim]
-                s2: tf.Tensor, [B, latent_dim]
+                x: tf.Tensor, [B, H, W, in_dim], input feature map.
+                s1: tf.Tensor, [B, latent_dim], first style.
+                s2: tf.Tensor, [B, latent_dim], second style.
             Returns:
-                tf.Tensor, [B, Hx2, Wx2, out_dim]
+                tf.Tensor, [B, Hx2, Wx2, out_dim], next feature map.
             """
             if self.preconv:
                 # [B, Hx2, Wx2, out_dim]
