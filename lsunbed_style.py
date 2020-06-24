@@ -46,6 +46,7 @@ class StyleLsunBed(StyleAlae):
             'latent_dim': 256,
             'num_layers': 7,
             'map_num_layers': 8,
+            'disc_num_layers': 3,
             'init_channels': 16,
             'max_channels': 256,
             'out_channels': 3,
