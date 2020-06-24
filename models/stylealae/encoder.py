@@ -4,11 +4,20 @@ from .utils import AffineTransform, Normalize2D, Repeat2D
 
 
 class Encoder(tf.keras.Model):
+    """Encode style vector from image.
+    """
     def __init__(self,
                  init_channels,
                  max_channels,
                  num_layer,
                  latent_dim):
+        """Initializer.
+        Args:
+            init_channels: int, the number of channels of the global latent.
+            max_channels: int, maximum channels of the features.
+            num_layer: int, the number of the layers, it determines the size of global latent.
+            latent_dim: int, size of the style vector.
+        """
         super(Encoder, self).__init__()
         self.init_channels = init_channels
         self.max_channels = max_channels
@@ -32,6 +41,16 @@ class Encoder(tf.keras.Model):
                               'pool' if resolution < 128 else 'conv'))
 
     def call(self, x):
+        """Generate style vector and global latent x.
+        Args:
+            x: tf.Tensor, [B, H, W, C], image tensor.
+        Returns:
+            x: tf.Tensor, [B, H', W', C'], global latent.
+                where H' = H / (2 ** (num_layer - 1))
+                      W' = W / (2 ** (num_layer - 1))
+                      C' = min(max_channels, init_channels * 2 ** num_layer)
+            styles: tf.Tensor, [B, latent_dim], style vector.
+        """
         bsize = tf.shape(x)[0]
         styles = tf.zeros([bsize, self.latent_dim], dtype=tf.float32)
 
@@ -43,7 +62,18 @@ class Encoder(tf.keras.Model):
         return x, styles
 
     class Block(tf.keras.Model):
+        """Encoder block for progressive downsampling.
+        """
         def __init__(self, out_dim, latent_dim, preconv, downsample):
+            """Initializer.
+            Args:
+                out_dim: int, number of the output channels.
+                latent_dim: int, size of the latent vector.
+                preconv: bool, whether run convolution for downsampling or not.
+                downsample: str, down sampling policy for pre-convolution options.
+                    - pool: (3x3, stride=1)-conv -> (2x2)-avgpool
+                    - conv: (3x3, stride=2)-conv
+            """
             super(Encoder.Block, self).__init__()
             self.out_dim = out_dim
             self.latent_dim = latent_dim
@@ -70,13 +100,13 @@ class Encoder(tf.keras.Model):
             self.style_proj2 = tf.keras.layers.Dense(self.latent_dim)
 
         def call(self, x):
-            """
+            """Generate style vector.
             Args:
-                x: tf.Tensor, [B, H, W, in_dim]
+                x: tf.Tensor, [B, H, W, in_dim], input feature map.
             Returns:
-                x: tf.Tensor, [B, H/2, W/2, out_dim]
-                style1: tf.Tensor, [B, latent_dim]
-                style2: tf.Tensor, [B, latent_dim]
+                x: tf.Tensor, [B, H/2, W/2, out_dim], whitened feature map.
+                style1: tf.Tensor, [B, latent_dim], first style.
+                style2: tf.Tensor, [B, latent_dim], second style.
             """
             if self.preconv:
                 # [B, H/2, W/2, out_dim]
