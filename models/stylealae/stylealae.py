@@ -132,5 +132,5 @@ class StyleAlae(ALAE):
             self.discriminator = discriminator
 
         def call(self, x):
-            x, style = self.encoder(x)
+            x, _ = self.encoder(x)
             return self.discriminator(x)
