@@ -45,10 +45,6 @@ class Encoder(tf.keras.Model):
         Args:
             x: tf.Tensor, [B, H, W, C], image tensor.
         Returns:
-            x: tf.Tensor, [B, H', W', C'], global latent.
-                where H' = H / (2 ** (num_layer - 1))
-                      W' = W / (2 ** (num_layer - 1))
-                      C' = min(max_channels, init_channels * 2 ** num_layer)
             styles: tf.Tensor, [B, latent_dim], style vector.
         """
         bsize = tf.shape(x)[0]
@@ -59,7 +55,7 @@ class Encoder(tf.keras.Model):
             x, s1, s2 = block(x)
             styles += s1 + s2
 
-        return x, styles
+        return styles
 
     class Block(tf.keras.Model):
         """Encoder block for progressive downsampling.
