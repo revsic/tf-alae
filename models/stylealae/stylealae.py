@@ -7,7 +7,13 @@ from .maplatent import LatentMap
 
 
 class StyleAlae(ALAE):
+    """Style-ALAE, Adversarial latent autoencoder with StyleGAN architecture.
+    """
     def __init__(self, settings=None):
+        """Initializer.
+        Args:
+            settings: Dict[str, Any], parameters for constructing architecture.
+        """
         super(ALAE, self).__init__()
         if settings is None:
             settings = StyleAlae.default_setting()
@@ -103,6 +109,10 @@ class StyleAlae(ALAE):
 
     @staticmethod
     def default_setting():
+        """Default settings.
+        Returns:
+            Dict[str, Any], settings.
+        """
         return {
             'latent_dim': 256,
             'num_layers': 4,
@@ -117,6 +127,8 @@ class StyleAlae(ALAE):
         }
 
     class StyleOnly(tf.keras.Model):
+        """Submodule for passing only style vector from encoder outputs.
+        """
         def __init__(self, encoder):
             super(StyleAlae.StyleOnly, self).__init__()
             self.encoder = encoder
@@ -126,6 +138,8 @@ class StyleAlae(ALAE):
             return style
 
     class Binder(tf.keras.Model):
+        """Bind encoder outputs to discriminator.
+        """
         def __init__(self, encoder, discriminator):
             super(StyleAlae.Binder, self).__init__()
             self.encoder = encoder
