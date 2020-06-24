@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 class LatentMap(tf.keras.Model):
-    """Generate style vector from prior.
+    """Map prior to latent or latent to prior.
     """
     def __init__(self, num_layer, latent_dim, hidden_dim):
         """Initializer.
@@ -25,7 +25,7 @@ class LatentMap(tf.keras.Model):
             tf.keras.layers.Dense(self.latent_dim))
 
     def call(self, z):
-        """Generate style vector.
+        """Fully-connected pass.
         Args:
             z: tf.Tensor, [B, z_dim], style prior.
         Returns:
