@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 from ..alae import ALAE
@@ -22,6 +23,7 @@ class StyleAlae(ALAE):
         self.latent_dim = self.settings['latent_dim']
         self.num_layer = self.settings['num_layers']
         self.map_num_layer = self.settings['map_num_layers']
+        self.disc_num_layer = self.settings['disc_num_layers']
         self.init_channels = self.settings['init_channels']
         self.max_channels = self.settings['max_channels']
         self.out_channels = self.settings['out_channels']
@@ -33,33 +35,6 @@ class StyleAlae(ALAE):
                      self.settings['lr'],
                      self.settings['beta1'],
                      self.settings['beta2'])
-
-        self.binder = StyleAlae.Binder(self.enc, self.disc)
-        self.styleonly = StyleAlae.StyleOnly(self.enc)
-
-        self.fakepass = tf.keras.Sequential([self.map, self.gen, self.binder])
-        self.realpass = self.binder
-        self.latentpass = tf.keras.Sequential([
-            self.map, self.gen, self.styleonly])
-        
-        style_variables = []
-        for block in self.enc.blocks:
-            style_variables += [
-                x.name for x in block.style_proj1.trainable_variables]
-            style_variables += [
-                x.name for x in block.style_proj2.trainable_variables]
-
-        self.ed_var = [
-            var for var in self.ed_var if var.name not in style_variables]
-
-    def encode(self, *args, **kwargs):
-        """Encode the input tensors to latent vectors.
-        Args:
-            _: tf.Tensor, [B, ...], input tensors.
-        Returns:
-            _: tf.Tensor, [B, latent_dim], latent vectors.
-        """
-        return self.styleonly(*args, **kwargs)
 
     def mapper(self):
         """Model for mpping latent from prior.
@@ -101,50 +76,29 @@ class StyleAlae(ALAE):
         Returns:
             tf.keras.Model: discriminate real sample from fake one.
         """
-        disc = tf.keras.layers.Conv2D(1, 1, use_bias=False)
-        channels = min(
-            self.max_channels, self.init_channels * 2 ** self.num_layer)
-        disc.build((None, 4, 4, channels))
+        disc = LatentMap(num_layer=self.disc_num_layer,
+                         latent_dim=1,
+                         hidden_dim=self.latent_dim)
+        disc.build((None, self.latent_dim))
         return disc
 
     @staticmethod
-    def default_setting():
+    def default_setting(imgsize=256):
         """Default settings.
         Returns:
             Dict[str, Any], settings.
         """
+        num_layers = np.log2(imgsize) - 1
         return {
-            'latent_dim': 256,
-            'num_layers': 4,
-            'map_num_layers': 5,
+            'latent_dim': 512,
+            'num_layers': num_layers,
+            'map_num_layers': 8,
+            'disc_num_layers': 3,
             'init_channels': 32,
-            'max_channels': 256,
-            'out_channels': 1,
-            'lr': 0.002,
+            'max_channels': 512,
+            'out_channels': 3,
+            'lr': 0.001,
             'beta1': 0.0,
             'beta2': 0.99,
             'gamma': 10,
         }
-
-    class StyleOnly(tf.keras.Model):
-        """Submodule for passing only style vector from encoder outputs.
-        """
-        def __init__(self, encoder):
-            super(StyleAlae.StyleOnly, self).__init__()
-            self.encoder = encoder
-        
-        def call(self, x):
-            _, style = self.encoder(x)
-            return style
-
-    class Binder(tf.keras.Model):
-        """Bind encoder outputs to discriminator.
-        """
-        def __init__(self, encoder, discriminator):
-            super(StyleAlae.Binder, self).__init__()
-            self.encoder = encoder
-            self.discriminator = discriminator
-
-        def call(self, x):
-            x, _ = self.encoder(x)
-            return self.discriminator(x)
