@@ -28,7 +28,7 @@ class ALAE(tf.keras.Model):
         self.fakepass = tf.keras.Sequential([
             self.map, self.gen, self.enc, self.disc])
         self.realpass = tf.keras.Sequential([self.enc, self.disc])
-        self.latentpass = tf.keras.Sequential([self.map, self.gen, self.enc])
+        self.latentpass = tf.keras.Sequential([self.gen, self.enc])
 
         self.ed_var = self.enc.trainable_variables + self.disc.trainable_variables
         self.fg_var = self.map.trainable_variables + self.gen.trainable_variables
@@ -108,7 +108,7 @@ class ALAE(tf.keras.Model):
             tf.Tensor, [], latent loss value.
         """
         latent = self.map(z)
-        recovered = self.latentpass(z)
+        recovered = self.latentpass(latent)
         return tf.reduce_mean(tf.square(latent - recovered))
 
     def losses(self, x):
