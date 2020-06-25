@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+from .lreq import LrEqDense, LrEqConv2D
 from .utils import AffineTransform, Normalize2D, Repeat2D
 
 
@@ -27,7 +28,7 @@ class Encoder(tf.keras.Model):
         resolution = 4 * 2 ** (self.num_layer - 1)
         channels = self.init_channels
         out_dim = min(self.max_channels, channels)
-        self.preconv = tf.keras.layers.Conv2D(out_dim, 1)
+        self.preconv = LrEqConv2D(out_dim, 1)
 
         self.blocks = []
         for i in range(self.num_layer):
@@ -79,21 +80,21 @@ class Encoder(tf.keras.Model):
             if self.preconv:
                 if self.downsample == 'pool':
                     self.downsample_conv = tf.keras.Sequential([
-                        tf.keras.layers.Conv2D(
+                        LrEqConv2D(
                             out_dim, 3, 1, padding='same', use_bias=False),
                         tf.keras.layers.AveragePooling2D(2)])
                 else:
-                    self.downsample_conv = tf.keras.layers.Conv2D(
+                    self.downsample_conv = LrEqConv2D(
                         out_dim, 3, 2, padding='same', use_bias=False)
 
             self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
             self.normalize = Normalize2D()
 
-            self.conv = tf.keras.layers.Conv2D(
+            self.conv = LrEqConv2D(
                 self.out_dim, 3, 1, padding='same', use_bias=False)
 
-            self.style_proj1 = tf.keras.layers.Dense(self.latent_dim)
-            self.style_proj2 = tf.keras.layers.Dense(self.latent_dim)
+            self.style_proj1 = LrEqDense(self.latent_dim)
+            self.style_proj2 = LrEqDense(self.latent_dim)
 
         def call(self, x):
             """Generate style vector.

@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+from .lreq import LrEqDense, LrEqConv2D, LrEqConv2DTranspose
 from .utils import AffineTransform, Normalize2D, Repeat2D
 
 
@@ -39,7 +40,7 @@ class Generator(tf.keras.Model):
             channels //= 2
             resolution *= 2
 
-        self.postconv = tf.keras.layers.Conv2D(self.out_channels, 1)
+        self.postconv = LrEqConv2D(self.out_channels, 1, gain=0.33)
     
     def call(self, styles):
         """Generate image.
@@ -78,26 +79,26 @@ class Generator(tf.keras.Model):
                 if self.upsample == 'repeat':
                     self.upsample_conv = tf.keras.Sequential([
                         Repeat2D(2),
-                        tf.keras.layers.Conv2D(
+                        LrEqConv2D(
                             self.out_dim, 3,
                             strides=1,
                             padding='same',
                             use_bias=False)])
                 elif self.upsample == 'deconv':
-                    self.upsample_conv = tf.keras.layers.Conv2DTranspose(
+                    self.upsample_conv = LrEqConv2DTranspose(
                         self.out_dim, 3, 2, padding='same', use_bias=False)
     
             self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
             self.normalize = Normalize2D()
 
             self.noise_affine1 = AffineTransform([1, 1, 1, self.out_dim])
-            self.latent_proj1 = tf.keras.layers.Dense(self.out_dim * 2)
+            self.latent_proj1 = LrEqDense(self.out_dim * 2, gain=1)
 
-            self.conv = tf.keras.layers.Conv2D(
+            self.conv = LrEqConv2D(
                 self.out_dim, 3, 1, padding='SAME', use_bias=False)
             
             self.noise_affine2 = AffineTransform([1, 1, 1, self.out_dim])
-            self.latent_proj2 = tf.keras.layers.Dense(self.out_dim * 2)
+            self.latent_proj2 = LrEqDense(self.out_dim * 2, gain=1)
 
         def call(self, x, s1, s2):
             """Generate next level feature map.
