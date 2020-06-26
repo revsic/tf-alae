@@ -5,6 +5,7 @@ from ..alae import ALAE
 from .encoder import Encoder
 from .generator import Generator
 from .maplatent import LatentMap
+from .lreqadam import LrEqAdam
 
 
 class StyleAlae(ALAE):
@@ -33,8 +34,12 @@ class StyleAlae(ALAE):
         self.prepare(self.latent_dim,
                      self.settings['gamma'],
                      self.settings['lr'],
-                     self.settings['beta1'],
+                     0.,
                      self.settings['beta2'])
+        
+        self.ed_opt = LrEqAdam(self.settings['lr'], self.settings['beta2'])
+        self.fg_opt = LrEqAdam(self.settings['lr'], self.settings['beta2'])
+        self.eg_opt = LrEqAdam(self.settings['lr'], self.settings['beta2'])
 
     def mapper(self):
         """Model for mpping latent from prior.
@@ -98,7 +103,6 @@ class StyleAlae(ALAE):
             'max_channels': 512,
             'out_channels': 3,
             'lr': 0.001,
-            'beta1': 0.0,
             'beta2': 0.99,
             'gamma': 10,
         }
