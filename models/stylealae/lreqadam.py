@@ -1,7 +1,9 @@
 import tensorflow as tf
 from tensorflow.python.framework import ops
-from tensorflow.python.ops import array_ops, control_flow_ops, math_ops, state_ops
-from tensorflow.python.training import training_ops
+from tensorflow.python.ops import array_ops
+from tensorflow.python.ops import control_flow_ops
+from tensorflow.python.ops import math_ops
+from tensorflow.python.ops import state_ops
 
 
 class LrEqAdam(tf.keras.optimizers.Optimizer):
@@ -12,7 +14,6 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
                  **kwargs):
         super(LrEqAdam, self).__init__()
         self._set_hyper('learning_rate', kwargs.get('lr', learning_rate))
-        self._set_hyper('decay', self._initial_decay)
         self._set_hyper('beta_2', beta_2)
         self.epsilon = epsilon
 
@@ -34,7 +35,7 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
 
     def _resource_apply_dense(self, grad, var, apply_state=None):
         var_dtype = var.dtype.base_dtype
-        lr_t = self._decayed_lr(var_dtype)
+        lr_t = array_ops.identity(self._get_hyper('learning_rate', var_dtype))
         local_step = math_ops.cast(self.iterations + 1, var_dtype)
         beta_2_t = array_ops.identity(self._get_hyper('beta_2', var_dtype))
         beta_2_power = math_ops.pow(beta_2_t, local_step)
@@ -56,7 +57,7 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
         var_t = math_ops.sub(var, lr_t * var_delta)
 
         var_update = state_ops.assign(var, var_t, use_locking=self._use_locking)
-        return control_flow_ops.group(var_update)
+        return var_update
 
     def _resource_apply_sparse(self, grad, var, indices, apply_state=None):
         raise NotImplementedError('sparse gradient is not implemented on LrEqAdam')
@@ -65,8 +66,6 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
         config = super(LrEqAdam, self).get_config()
         config.update({
             'learning_rate': self._serialize_hyperparameter('learning_rate'),
-            'decay': self._serialize_hyperparameter('decay'),
-            'beta_1': self._serialize_hyperparameter('beta_1'),
             'beta_2': self._serialize_hyperparameter('beta_2'),
             'epsilon': self.epsilon
         })
