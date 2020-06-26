@@ -1,21 +1,18 @@
 import tensorflow as tf
 from tensorflow.python.framework import ops
-from tensorflow.python.ops import array_ops
-from tensorflow.python.ops import math_ops
+from tensorflow.python.ops import array_ops, control_flow_ops, math_ops, state_ops
 from tensorflow.python.training import training_ops
 
 
 class LrEqAdam(tf.keras.optimizers.Optimizer):
     def __init__(self,
                  learning_rate=1e-3,
-                 beta_1=0.9,
                  beta_2=0.999,
                  epsilon=1e-7,
                  **kwargs):
         super(LrEqAdam, self).__init__()
         self._set_hyper('learning_rate', kwargs.get('lr', learning_rate))
         self._set_hyper('decay', self._initial_decay)
-        self._set_hyper('beta_1', beta_1)
         self._set_hyper('beta_2', beta_2)
         self.epsilon = epsilon
 
@@ -23,30 +20,7 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
         # Create slots for the first and second moments.
         # Separate for-loops to respect the ordering of slot variables from v1.
         for var in var_list:
-            self.add_slot(var, 'm')
-        for var in var_list:
             self.add_slot(var, 'v')
-
-    def _prepare_local(self, var_device, var_dtype, apply_state):
-        super(LrEqAdam, self)._prepare_local(var_device, var_dtype, apply_state)
-
-        local_step = math_ops.cast(self.iterations + 1, var_dtype)
-        beta_1_t = array_ops.identity(self._get_hyper('beta_1', var_dtype))
-        beta_2_t = array_ops.identity(self._get_hyper('beta_2', var_dtype))
-        beta_1_power = math_ops.pow(beta_1_t, local_step)
-        beta_2_power = math_ops.pow(beta_2_t, local_step)
-        lr = apply_state[(var_device, var_dtype)]['lr_t'] * \
-            (math_ops.sqrt(1 - beta_2_power) / (1 - beta_1_power))
-        apply_state[(var_device, var_dtype)].update(
-            dict(
-                lr=lr,
-                epsilon=ops.convert_to_tensor_v2(self.epsilon, var_dtype),
-                beta_1_t=beta_1_t,
-                beta_1_power=beta_1_power,
-                one_minus_beta_1_t=1 - beta_1_t,
-                beta_2_t=beta_2_t,
-                beta_2_power=beta_2_power,
-                one_minus_beta_2_t=1 - beta_2_t))
 
     def set_weights(self, weights):
         params = self.weights
@@ -59,24 +33,30 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
         super(LrEqAdam, self).set_weights(weights)
 
     def _resource_apply_dense(self, grad, var, apply_state=None):
-        var_device, var_dtype = var.device, var.dtype.base_dtype
-        coefficients = ((apply_state or {}).get((var_device, var_dtype))
-                        or self._fallback_apply_state(var_device, var_dtype))
+        var_dtype = var.dtype.base_dtype
+        lr_t = self._decayed_lr(var_dtype)
+        local_step = math_ops.cast(self.iterations + 1, var_dtype)
+        beta_2_t = array_ops.identity(self._get_hyper('beta_2', var_dtype))
+        beta_2_power = math_ops.pow(beta_2_t, local_step)
+        epsilon_t = ops.convert_to_tensor_v2(self.epsilon, var_dtype)
 
-        m = self.get_slot(var, 'm')
+        lr_t = lr_t * math_ops.sqrt(1 - beta_2_power)
+
         v = self.get_slot(var, 'v')
-        return training_ops.resource_apply_adam(
-            var.handle,
-            m.handle,
-            v.handle,
-            coefficients['beta_1_power'],
-            coefficients['beta_2_power'],
-            coefficients['lr_t'],
-            coefficients['beta_1_t'],
-            coefficients['beta_2_t'],
-            coefficients['epsilon'],
-            grad,
+        v_t = state_ops.assign(
+            v,
+            beta_2_t * v + (1. - beta_2_t) * math_ops.square(grad),
             use_locking=self._use_locking)
+
+        var_delta = 1. / (math_ops.sqrt(v_t) + epsilon_t)
+        if hasattr(var, 'lreq_coeff'):
+            lreq_coeff = ops.convert_to_tensor_v2(var.lreq_coeff, var_dtype)
+            var_delta = var_delta * lreq_coeff
+
+        var_t = math_ops.sub(var, lr_t * var_delta)
+
+        var_update = state_ops.assign(var, var_t, use_locking=self._use_locking)
+        return control_flow_ops.group(var_update)
 
     def _resource_apply_sparse(self, grad, var, indices, apply_state=None):
         raise NotImplementedError('sparse gradient is not implemented on LrEqAdam')
