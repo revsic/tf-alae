@@ -14,6 +14,7 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
                  **kwargs):
         super(LrEqAdam, self).__init__()
         self._set_hyper('learning_rate', kwargs.get('lr', learning_rate))
+        self._set_hyper('decay', self._initial_decay)
         self._set_hyper('beta_2', beta_2)
         self.epsilon = epsilon
 
@@ -35,7 +36,7 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
 
     def _resource_apply_dense(self, grad, var, apply_state=None):
         var_dtype = var.dtype.base_dtype
-        lr_t = array_ops.identity(self._get_hyper('learning_rate', var_dtype))
+        lr_t = self._decayed_lr(var_dtype)
         local_step = math_ops.cast(self.iterations + 1, var_dtype)
         beta_2_t = array_ops.identity(self._get_hyper('beta_2', var_dtype))
         beta_2_power = math_ops.pow(beta_2_t, local_step)
@@ -66,6 +67,7 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
         config = super(LrEqAdam, self).get_config()
         config.update({
             'learning_rate': self._serialize_hyperparameter('learning_rate'),
+            'decay': self._serialize_hyperparameter('decay'),
             'beta_2': self._serialize_hyperparameter('beta_2'),
             'epsilon': self.epsilon
         })
