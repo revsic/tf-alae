@@ -10,7 +10,7 @@ from models.stylealae import StyleAlae
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('option', type=str, default='train')
-PARSER.add_argument('--name', default='style_lsunbed')
+PARSER.add_argument('--name', default='style_lsunbed_lreq')
 PARSER.add_argument('--summarydir', default='./summary')
 PARSER.add_argument('--ckptdir', default='./ckpt')
 PARSER.add_argument('--epochs', default=10, type=int)
