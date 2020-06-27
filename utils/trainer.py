@@ -25,9 +25,9 @@ class Trainer:
             testset: tf.data.Dataset, test dataset.
         """
         step = 0
-        for _ in tqdm.tqdm(range(epochs)):
+        for _ in range(epochs):
             # training phase
-            for datum in trainset:
+            for datum in tqdm.tqdm(trainset):
                 step += 1
                 losses = model.trainstep(datum)
                 self.write_summary(losses, step)
