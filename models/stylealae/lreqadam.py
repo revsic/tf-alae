@@ -11,8 +11,9 @@ class LrEqAdam(tf.keras.optimizers.Optimizer):
                  learning_rate=1e-3,
                  beta_2=0.999,
                  epsilon=1e-7,
+                 name='LrEqAdam',
                  **kwargs):
-        super(LrEqAdam, self).__init__()
+        super(LrEqAdam, self).__init__(name)
         self._set_hyper('learning_rate', kwargs.get('lr', learning_rate))
         self._set_hyper('decay', self._initial_decay)
         self._set_hyper('beta_2', beta_2)
