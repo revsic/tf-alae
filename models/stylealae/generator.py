@@ -86,7 +86,8 @@ class Generator(tf.keras.Model):
                             use_bias=False)])
                 elif self.upsample == 'deconv':
                     self.upsample_conv = LrEqConv2DTranspose(
-                        self.out_dim, 3, 2, padding='same', use_bias=False)
+                        self.out_dim, 3, 2,
+                        padding='same', use_bias=False, transform_kernel=True)
                 
                 self.blur = Blur()
     
