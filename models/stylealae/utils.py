@@ -83,4 +83,5 @@ class Blur(tf.keras.Model):
         channel = tf.shape(x)[-1]
         # [3, 3, C, 1] = [kernel_height, kernel_width, in_channel, channel_mul]
         kernel = tf.tile(self.kernel, [1, 1, channel, 1])
-        return tf.nn.depthwise_conv2d(x, kernel, strides=1, padding='same')
+        return tf.nn.depthwise_conv2d(
+            x, kernel, strides=[1, 1, 1, 1], padding='SAME')
