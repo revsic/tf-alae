@@ -57,7 +57,8 @@ class LrEqConv2D(tf.keras.layers.Layer):
                  activation=None,
                  use_bias=True,
                  gain=np.sqrt(2.),
-                 lrmul=1.0):
+                 lrmul=1.0,
+                 transform_kernel=False):
         super(LrEqConv2D, self).__init__()
         self.filters = filters
         self.kernel_size = make_tuple(kernel_size)
@@ -68,6 +69,7 @@ class LrEqConv2D(tf.keras.layers.Layer):
         self.use_bias = use_bias
         self.gain = gain
         self.lrmul = lrmul
+        self.transform_kernel = transform_kernel
     
     def build(self, input_shape):
         features = input_shape[-1]
@@ -86,8 +88,18 @@ class LrEqConv2D(tf.keras.layers.Layer):
             self.bias.lreq_coeff = self.lrmul
     
     def call(self, inputs):
+        kernel = self.kernel
+        if self.transform_kernel:
+            kernel = tf.pad(
+                kernel, [[1, 1], [1, 1], [0, 0], [0, 0]], 'constant')
+            kernel = 0.25 * (
+                kernel[1:, 1:] + 
+                kernel[:-1, 1:] + 
+                kernel[1:, :-1] + 
+                kernel[:-1, :-1])
+
         x = tf.nn.conv2d(inputs,
-                         self.kernel,
+                         kernel,
                          self.strides,
                          self.padding,
                          dilations=self.dilation_rate)
@@ -109,8 +121,9 @@ class LrEqConv2DTranspose(tf.keras.layers.Layer):
                  activation=None,
                  use_bias=True,
                  gain=np.sqrt(2.),
-                 lrmul=1.0):
-        super(LrEqConv2d, self).__init__()
+                 lrmul=1.0,
+                 transform_kernel=False):
+        super(LrEqConv2DTranspose, self).__init__()
         self.filters = filters
         self.kernel_size = make_tuple(kernel_size)
         self.strides = make_tuple(strides)
@@ -121,16 +134,14 @@ class LrEqConv2DTranspose(tf.keras.layers.Layer):
         self.use_bias = use_bias
         self.gain = gain
         self.lrmul = lrmul
+        self.transform_kernel = transform_kernel
     
     def build(self, input_shape):
         features = input_shape[-1]
         self.std = self.gain / np.sqrt(np.prod(self.kernel_size) * features)
 
         if self.padding == 'valid':
-            out_shape = [
-                input_shape[i + 1] * self.strides[i] + \
-                    (self.kernel_size[i] - 1) * self.dilation_rate[i]
-                for i in range(2)]
+            raise NotImplementedError('"valid" padding is not supported')
         elif self.padding == 'same':
             out_shape = [input_shape[i + 1] * self.strides[i] for i in range(2)]
         else:
@@ -150,9 +161,19 @@ class LrEqConv2DTranspose(tf.keras.layers.Layer):
             self.bias.lreq_coeff = self.lrmul
     
     def call(self, inputs):
+        kernel = self.kernel
+        if self.transform_kernel:
+            kernel = tf.pad(
+                kernel, [[1, 1], [1, 1], [0, 0], [0, 0]], 'constant')
+            kernel = \
+                kernel[1:, 1:] + \
+                kernel[:-1, 1:] + \
+                kernel[1:, :-1] + \
+                kernel[:-1, :-1]
+
         x = tf.nn.conv2d_transpose(
             inputs,
-            self.kernel,
+            kernel,
             [tf.shape(inputs)[0], *self.out_shape],
             self.strides,
             self.padding,
