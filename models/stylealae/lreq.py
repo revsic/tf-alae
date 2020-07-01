@@ -52,7 +52,7 @@ class LrEqConv2D(tf.keras.layers.Layer):
                  filters,
                  kernel_size,
                  strides=(1, 1),
-                 padding='valid',
+                 padding='VALID',
                  dilation_rate=(1, 1),
                  activation=None,
                  use_bias=True,
@@ -77,7 +77,7 @@ class LrEqConv2D(tf.keras.layers.Layer):
 
         kernel_init = tf.random_normal_initializer(0, self.std)
         self.kernel = tf.Variable(
-            kernel_init([*kernel_size, features, self.filters]),
+            kernel_init([*self.kernel_size, features, self.filters]),
             trainable=True)
         self.kernel.lreq_coeff = self.std * self.lrmul
 
@@ -115,7 +115,7 @@ class LrEqConv2DTranspose(tf.keras.layers.Layer):
                  filters,
                  kernel_size,
                  strides=(1, 1),
-                 padding='valid',
+                 padding='VALID',
                  output_padding=None,
                  dilation_rate=(1, 1),
                  activation=None,
@@ -140,17 +140,17 @@ class LrEqConv2DTranspose(tf.keras.layers.Layer):
         features = input_shape[-1]
         self.std = self.gain / np.sqrt(np.prod(self.kernel_size) * features)
 
-        if self.padding == 'valid':
-            raise NotImplementedError('"valid" padding is not supported')
-        elif self.padding == 'same':
+        if self.padding == 'VALID':
+            raise NotImplementedError('"VALID" padding is not supported')
+        elif self.padding == 'SAME':
             out_shape = [input_shape[i + 1] * self.strides[i] for i in range(2)]
         else:
-            raise ValueError('padding should be one of "valid" or "same"')
+            raise ValueError('padding should be one of "VALID" or "SAME"')
         self.out_shape = [*out_shape, self.filters]
 
         kernel_init = tf.random_normal_initializer(0, self.std)
         self.kernel = tf.Variable(
-            kernel_init([*kernel_size, self.filters, features]),
+            kernel_init([*self.kernel_size, self.filters, features]),
             trainable=True)
         self.kernel.lreq_coeff = self.std * self.lrmul
 
