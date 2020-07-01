@@ -82,18 +82,18 @@ class Encoder(tf.keras.Model):
                 if self.downsample == 'pool':
                     self.downsample_conv = tf.keras.Sequential([
                         LrEqConv2D(
-                            out_dim, 3, 1, padding='same', use_bias=False),
+                            out_dim, 3, 1, padding='SAME', use_bias=False),
                         tf.keras.layers.AveragePooling2D(2)])
                 else:
                     self.downsample_conv = LrEqConv2D(
                         out_dim, 3, 2,
-                        padding='same', use_bias=False, transform_kernel=True)
+                        padding='SAME', use_bias=False, transform_kernel=True)
 
             self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
             self.normalize = Normalize2D()
 
             self.conv = LrEqConv2D(
-                self.out_dim, 3, 1, padding='same', use_bias=False)
+                self.out_dim, 3, 1, padding='SAME', use_bias=False)
 
             self.style_proj1 = LrEqDense(self.latent_dim)
             self.style_proj2 = LrEqDense(self.latent_dim)
