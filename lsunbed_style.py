@@ -57,7 +57,7 @@ class StyleLsunBed(StyleAlae):
 
 
 """
-TODO: LOD, blending factor, kernel transform, pixel norm, blur
+TODO: LOD, blending factor, pixel norm
 """
 
 def train(args):
