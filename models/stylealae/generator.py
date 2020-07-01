@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from .lreq import LrEqDense, LrEqConv2D, LrEqConv2DTranspose
-from .utils import AffineTransform, Normalize2D, Repeat2D
+from .utils import AffineTransform, Normalize2D, Repeat2D, Blur
 
 
 class Generator(tf.keras.Model):
@@ -87,6 +87,8 @@ class Generator(tf.keras.Model):
                 elif self.upsample == 'deconv':
                     self.upsample_conv = LrEqConv2DTranspose(
                         self.out_dim, 3, 2, padding='same', use_bias=False)
+                
+                self.blur = Blur()
     
             self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
             self.normalize = Normalize2D()
@@ -112,6 +114,7 @@ class Generator(tf.keras.Model):
             if self.preconv:
                 # [B, Hx2, Wx2, out_dim]
                 x = self.upsample_conv(x)
+                x = self.blur(x)
 
             shape = tf.shape(x)
             # [1, Hx2, Wx2, 1]
