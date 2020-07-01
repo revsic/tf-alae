@@ -86,7 +86,8 @@ class Encoder(tf.keras.Model):
                         tf.keras.layers.AveragePooling2D(2)])
                 else:
                     self.downsample_conv = LrEqConv2D(
-                        out_dim, 3, 2, padding='same', use_bias=False)
+                        out_dim, 3, 2,
+                        padding='same', use_bias=False, transform_kernel=True)
 
             self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
             self.normalize = Normalize2D()
