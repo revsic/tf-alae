@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 
@@ -56,3 +57,30 @@ class Repeat2D(tf.keras.Model):
         x = x[:, :, None, :, None, :]
         x = tf.tile(x, [1, 1, self.factor, 1, self.factor, 1])
         return tf.reshape(x, [-1, h * self.factor, w * self.factor, c])
+
+
+class Blur(tf.keras.Model):
+    """Bluring image with predefined convolution kernel.
+    """
+    def __init__(self):
+        super(Blur, self).__init__()
+        # [3]
+        kernel = np.array([1, 2, 1], dtype=np.float32)
+        # [3, 3]
+        kernel = kernel[:, None] * kernel[None, :]
+        kernel /= kernel.sum()
+        # [3, 3, 1, 1]
+        self.kernel = tf.constant(kernel[..., None, None])
+    
+    def call(self, x):
+        """Bluring image.
+        Args:
+            x: tf.Tensor, [B, H, W, C], image tensor.
+        Returns:
+            tf.Tensor, [B, H, W, C], blured image.
+        """
+        # C
+        channel = tf.shape(x)[-1]
+        # [3, 3, C, 1] = [kernel_height, kernel_width, in_channel, channel_mul]
+        kernel = tf.tile(self.kernel, [1, 1, channel, 1])
+        return tf.nn.depthwise_conv2d(x, kernel, strides=1, padding='same')
