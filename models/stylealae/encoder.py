@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from .lreq import LrEqDense, LrEqConv2D
-from .utils import AffineTransform, Normalize2D, Repeat2D
+from .utils import AffineTransform, Normalize2D, Repeat2D, Blur
 
 
 class Encoder(tf.keras.Model):
@@ -78,6 +78,7 @@ class Encoder(tf.keras.Model):
             self.downsample = downsample
 
             if self.preconv:
+                self.blur = Blur()
                 if self.downsample == 'pool':
                     self.downsample_conv = tf.keras.Sequential([
                         LrEqConv2D(
@@ -106,6 +107,8 @@ class Encoder(tf.keras.Model):
                 style2: tf.Tensor, [B, latent_dim], second style.
             """
             if self.preconv:
+                # [B, H, W, in_dim]
+                x = self.blur(x)
                 # [B, H/2, W/2, out_dim]
                 x = self.downsample_conv(x)
                 x = self.leaky_relu(x)
