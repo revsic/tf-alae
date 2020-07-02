@@ -24,6 +24,7 @@ class Generator(tf.keras.Model):
         self.max_channels = max_channels
         self.num_layer = num_layer
         self.out_channels = out_channels
+        self.level = self.num_layer - 1
 
         resolution = 4
         channels = self.init_channels * 2 ** (self.num_layer - 1)
@@ -31,6 +32,7 @@ class Generator(tf.keras.Model):
         self.const = tf.ones([1, resolution, resolution, out_dim])
 
         self.blocks = []
+        self.to_rgb = []
         for i in range(self.num_layer):
             out_dim = min(self.max_channels, channels)
             self.blocks.append(
@@ -39,9 +41,15 @@ class Generator(tf.keras.Model):
                                 'repeat' if resolution < 128 else 'deconv'))
             channels //= 2
             resolution *= 2
-
-        self.postconv = LrEqConv2D(self.out_channels, 1, gain=0.33)
+            self.to_rgb.append(LrEqConv2D(self.out_channels, 1, gain=0.03))
     
+    def set_level(self, level):
+        """Set training level, start from first block to last block.
+        Args:
+            level: int, training level, in range [0, num_layer).
+        """
+        self.level = level
+
     def call(self, styles):
         """Generate image.
         Args:
@@ -49,14 +57,15 @@ class Generator(tf.keras.Model):
         Returns:
             tf.Tensor, [B, S, S, out_channels], generated image.
                 where S = 2 ** (num_layer + 1).
+                if self.level is set, S = 2 ** (level + 2).
         """
         # [B, 4, 4, in_dim]
         x = self.const
-        for block in self.blocks:
+        for block in self.blocks[:self.level + 1]:
             # [B, S', S', C] where S' = 4 * 2 ** i, C = in_dim / (2 ** (i + 1))
             x = block(x, styles, styles)
         # [B, S, S, out_channels]
-        return self.postconv(x)
+        return self.to_rgb[self.level](x)
 
     class Block(tf.keras.Model):
         """Generator block for progressive growing.
