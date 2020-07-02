@@ -57,7 +57,7 @@ class StyleLsunBed(StyleAlae):
 
 
 """
-TODO: LOD, blending factor, pixel norm
+TODO: blending factor, pixel norm, lod driver (trainer callback, dynamic batch)
 """
 
 def train(args):
