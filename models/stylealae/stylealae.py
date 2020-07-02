@@ -41,6 +41,14 @@ class StyleAlae(ALAE):
         self.fg_opt = LrEqAdam(self.settings['lr'], self.settings['beta2'])
         self.eg_opt = LrEqAdam(self.settings['lr'], self.settings['beta2'])
 
+    def set_level(self, level):
+        """Set training level for progressive growing.
+        Args:
+            level: int, training level, in range [0, num_layer).
+        """
+        self.gen.set_level(level)
+        self.enc.set_level(level)
+
     def mapper(self):
         """Model for mpping latent from prior.
         Returns:
