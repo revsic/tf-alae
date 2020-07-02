@@ -24,22 +24,31 @@ class Encoder(tf.keras.Model):
         self.max_channels = max_channels
         self.num_layer = num_layer
         self.latent_dim = latent_dim
+        self.level = self.num_layer - 1
 
         resolution = 4 * 2 ** (self.num_layer - 1)
         channels = self.init_channels
-        out_dim = min(self.max_channels, channels)
-        self.preconv = LrEqConv2D(out_dim, 1)
+        self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
 
         self.blocks = []
+        self.from_rgb = []
         for i in range(self.num_layer):
             channels *= 2
             resolution //= 2
             out_dim = min(self.max_channels, channels)
+            self.from_rgb.append(LrEqConv2D(out_dim, 1))
             self.blocks.append(
                 Encoder.Block(out_dim,
                               self.latent_dim,
                               i > 0,
                               'pool' if resolution < 128 else 'conv'))
+
+    def set_level(self, level):
+        """Set training level, start from last block to first block.
+        Args:
+            level: int, training level, in range [0, num_layer).
+        """
+        self.level = level
 
     def call(self, x):
         """Generate style vector and global latent x.
@@ -51,8 +60,11 @@ class Encoder(tf.keras.Model):
         bsize = tf.shape(x)[0]
         styles = tf.zeros([bsize, self.latent_dim], dtype=tf.float32)
 
-        x = self.preconv(x)
-        for block in self.blocks:
+        start = self.num_layer - self.level - 1
+        x = self.from_rgb[start](x)
+        x = self.leaky_relu(x)
+
+        for block in self.blocks[start:]:
             x, s1, s2 = block(x)
             styles += s1 + s2
 
