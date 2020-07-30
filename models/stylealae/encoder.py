@@ -50,6 +50,17 @@ class Encoder(tf.keras.Model):
         """
         self.level = level
 
+    def level_variables(self):
+        """Get trainable variables based on training level.
+        Returns:
+            List[tf.Variable], trainable variables.
+        """
+        start = self.num_layer - self.level - 1
+        var = self.from_rgb[start].trainable_variables
+        for block in self.blocks[start:]:
+            var += block.trainable_variables
+        return var
+
     def call(self, x):
         """Generate style vector and global latent x.
         Args:
