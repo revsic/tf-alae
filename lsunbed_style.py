@@ -16,6 +16,7 @@ PARSER.add_argument('--ckptdir', default='./ckpt')
 PARSER.add_argument('--epochs', default=10, type=int)
 PARSER.add_argument('--ckpt_interval', default=1000, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
+PARSER.add_argument('--batch_size', default=8, type=int)
 PARSER.add_argument('--dataset', default='D:\\bedroom_train_lmdb\\bedroom_train_lmdb')
 PARSER.add_argument('--evalset', default='D:\\bedroom_val_lmdb\\bedroom_val_lmdb')
 
@@ -35,14 +36,12 @@ class LevelController(Callback):
         self.num_layers = num_layers
         self.resolution = resolution
         self.epochs_per_level = epochs_per_level
-    
-    @override
+
     def interval(self):
         """Set callback interval as epoch.
         """
         return -1
 
-    @override
     def __call__(self, model, _, epochs):
         """Set training level of models based on epochs.
         """
@@ -104,12 +103,16 @@ def train(args):
     if not os.path.exists(args.ckptdir):
         os.makedirs(args.ckptdir)
 
-    trainer = Trainer(summary_path, ckpt_path, args.ckpt_interval)
+    trainer = Trainer(summary_path,
+                      ckpt_path,
+                      args.ckpt_interval,
+                      LevelController())
     trainer.train(
         stylealae,
         args.epochs,
-        lsunbed.datasets(),
-        lsunbed_eval.datasets())
+        lsunbed.datasets(bsize=args.batch_size),
+        lsunbed_eval.datasets(bsize=args.batch_size),
+        lsunbed.count // args.batch_size)
 
     return 0
 
