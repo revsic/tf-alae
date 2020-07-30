@@ -49,38 +49,42 @@ class Trainer:
         self.ckpt_interval = ckpt_interval
         self.callback = callback
 
-    def train(self, model, epochs, trainset, testset):
+    def train(self, model, epochs, trainset, testset, trainlen=None):
         """Train ALAE model with given datasets.
         Args:
             model: ALAE, tf.keras.Model, ALAE model.
             epochs: int, the number of the epochs.
             trainset: tf.data.Dataset, training dataset.
             testset: tf.data.Dataset, test dataset.
+            trainlen: int, length of the trainset.
         """
         step = 0
         cb_intval = self.callback.interval() \
             if self.callback is not None else None
-        for _ in tqdm.tqdm(range(epochs)):
+        for epoch in tqdm.tqdm(range(epochs)):
             if cb_intval == -1:
                 # run callback in epoch order
-                self.callback(models, steps, epochs)
+                self.callback(model, step, epoch)
 
             # training phase
-            for datum in tqdm.tqdm(trainset):
-                step += 1
-                losses = model.trainstep(datum)
-                self.write_summary(losses, step)
+            with tqdm.tqdm(total=trainlen) as pbar:
+                for datum in tqdm.tqdm(trainset):
+                    step += 1
+                    losses = model.trainstep(datum)
+                    self.write_summary(losses, step)
 
-                if self.ckpt_interval is not None and \
-                        step % self.ckpt_interval == 0:
-                    # if training set is too large
-                    _, flat = model(datum)
-                    self.write_image(flat, step, train=False)
-                    model.save_weights(self.ckpt_path)
-                
-                if cb_intval > 0 and step % cb_intval == 0:
-                    # run callback in step order
-                    self.callback(models, steps, epochs)
+                    if self.ckpt_interval is not None and \
+                            step % self.ckpt_interval == 0:
+                        # if training set is too large
+                        _, flat = model(datum)
+                        self.write_image(flat, step, train=False)
+                        model.save_weights(self.ckpt_path)
+                    
+                    if cb_intval is not None and \
+                            cb_intval > 0 and step % cb_intval == 0:
+                        # run callback in step order
+                        self.callback(model, step, epoch)
+                    pbar.update()
 
             _, flat = model(datum)
             self.write_image(flat, step)
