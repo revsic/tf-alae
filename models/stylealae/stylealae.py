@@ -49,6 +49,12 @@ class StyleAlae(ALAE):
         self.gen.set_level(level)
         self.enc.set_level(level)
 
+        gen_var = self.gen.level_variables()
+        enc_var = self.enc.level_variables()
+        self.ed_var = enc_var + self.disc.trainable_variables
+        self.fg_var = self.map.trainable_variables + gen_var
+        self.eg_var = enc_var + gen_var
+
     def mapper(self):
         """Model for mpping latent from prior.
         Returns:
