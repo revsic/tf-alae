@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 
 import numpy as np
@@ -90,6 +91,8 @@ TODO: blending factor, pixel norm, lod driver (trainer callback, dynamic batch)
 """
 
 def train(args):
+    tf.get_logger().setLevel(logging.ERROR)
+
     lsunbed = LsunBed(args.dataset)
     lsunbed_eval = LsunBed(args.evalset)
     stylealae = StyleLsunBed()
