@@ -83,7 +83,7 @@ class ALAE(tf.keras.Model):
         # gradient regularizer
         grad = tape.gradient(realloss, self.ed_var)
         gradreg = self.gamma / 2 * tf.reduce_mean([
-            tf.reduce_mean(tf.square(g)) for g in grad])
+            tf.reduce_mean(tf.square(g)) for g in grad if g is not None])
 
         return fakeloss + realloss + gradreg
 
