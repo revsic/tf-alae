@@ -4,7 +4,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
-from utils.trainer import Trainer
+from utils.trainer import Callback, Trainer
 from datasets.lsunbed import LsunBed
 from models.stylealae import StyleAlae
 
@@ -18,6 +18,36 @@ PARSER.add_argument('--ckpt_interval', default=1000, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
 PARSER.add_argument('--dataset', default='D:\\bedroom_train_lmdb\\bedroom_train_lmdb')
 PARSER.add_argument('--evalset', default='D:\\bedroom_val_lmdb\\bedroom_val_lmdb')
+
+NUM_LAYERS = 7
+RESOLUTION = (NUM_LAYERS + 1) ** 2
+EPOCHS_PER_LEVEL = 1
+
+
+class LevelController(Callback):
+    """Training level controller.
+    """
+    def __init__(self,
+                 num_layers=NUM_LAYERS,
+                 resolution=RESOLUTION,
+                 epochs_per_level=EPOCHS_PER_LEVEL):
+        super(LevelController, self).__init__()
+        self.num_layers = num_layers
+        self.resolution = resolution
+        self.epochs_per_level = epochs_per_level
+    
+    @override
+    def interval(self):
+        """Set callback interval as epoch.
+        """
+        return -1
+
+    @override
+    def __call__(self, model, _, epochs):
+        """Set training level of models based on epochs.
+        """
+        level = min(self.num_layers - 1, epochs // self.epochs_per_level)
+        model.set_level(level)
 
 
 class StyleLsunBed(StyleAlae):
@@ -44,7 +74,7 @@ class StyleLsunBed(StyleAlae):
     def default_setting():
         return {
             'latent_dim': 256,
-            'num_layers': 7,
+            'num_layers': NUM_LAYERS,  # 7 => resolution 256x256
             'map_num_layers': 5,
             'disc_num_layers': 3,
             'init_channels': 8,
