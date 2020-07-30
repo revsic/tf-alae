@@ -49,6 +49,16 @@ class Generator(tf.keras.Model):
             level: int, training level, in range [0, num_layer).
         """
         self.level = level
+    
+    def level_variables(self):
+        """Get trainable variables based on training level.
+        Returns:
+            List[tf.Variable], trainable variables.
+        """
+        var = self.to_rgb[self.level].trainable_variables
+        for block in self.blocks[:self.level + 1]:
+            var += block.trainable_variables
+        return var
 
     def call(self, styles):
         """Generate image.
