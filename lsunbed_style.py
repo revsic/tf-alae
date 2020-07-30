@@ -31,11 +31,9 @@ class LevelController(Callback):
     """
     def __init__(self,
                  num_layers=NUM_LAYERS,
-                 resolution=RESOLUTION,
                  epochs_per_level=EPOCHS_PER_LEVEL):
         super(LevelController, self).__init__()
         self.num_layers = num_layers
-        self.resolution = resolution
         self.epochs_per_level = epochs_per_level
 
     def interval(self):
@@ -87,7 +85,7 @@ class StyleLsunBed(StyleAlae):
 
 
 """
-TODO: blending factor, pixel norm, lod driver (trainer callback, dynamic batch)
+TODO: blending factor, pixel norm, lod driver (dynamic batch)
 """
 
 def train(args):
