@@ -5,16 +5,49 @@ import tensorflow as tf
 import tqdm
 
 
+class Callback:
+    """Callback object for customizing trainer.
+    """
+    def __init__(self):
+        pass
+
+    def interval(self):
+        """Callback interval, -1 for epochs, positives for steps
+        """
+        raise NotImplementedError('Callback.interval is not implemented')
+
+    def __call__(self, model, steps, epochs):
+        """Call methods for manipulating models.
+        Args:
+            model: tf.keras.Model, model.
+            steps: int, current steps.
+            epochs: int, current epochs.
+        """
+        raise NotImplementedError('Callback.__call__ is not implemented')
+
+
 class Trainer:
     """ALAE trainer.
     """
-    def __init__(self, summary_path, ckpt_path, ckpt_interval=None):
+    def __init__(self,
+                 summary_path,
+                 ckpt_path,
+                 ckpt_interval=None,
+                 callback=None):
+        """Initializer.
+        Args:
+            summary_path: str, path to the summary.
+            ckpt_path: str, path to the checkpoint.
+            ckpt_interval: int, write checkpoints in given steps.
+            callback: Callback, callback object for customizing.
+        """
         train_path = os.path.join(summary_path, 'train')
         test_path = os.path.join(summary_path, 'test')
         self.train_summary = tf.summary.create_file_writer(train_path)
         self.test_summary = tf.summary.create_file_writer(test_path)
         self.ckpt_path = ckpt_path
         self.ckpt_interval = ckpt_interval
+        self.callback = callback
 
     def train(self, model, epochs, trainset, testset):
         """Train ALAE model with given datasets.
@@ -25,7 +58,13 @@ class Trainer:
             testset: tf.data.Dataset, test dataset.
         """
         step = 0
+        cb_intval = self.callback.interval() \
+            if self.callback is not None else None
         for _ in tqdm.tqdm(range(epochs)):
+            if cb_intval == -1:
+                # run callback in epoch order
+                self.callback(models, steps, epochs)
+
             # training phase
             for datum in tqdm.tqdm(trainset):
                 step += 1
@@ -38,6 +77,10 @@ class Trainer:
                     _, flat = model(datum)
                     self.write_image(flat, step, train=False)
                     model.save_weights(self.ckpt_path)
+                
+                if cb_intval > 0 and step % cb_intval == 0:
+                    # run callback in step order
+                    self.callback(models, steps, epochs)
 
             _, flat = model(datum)
             self.write_image(flat, step)
