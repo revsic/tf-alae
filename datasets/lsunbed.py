@@ -9,10 +9,15 @@ class LsunBed:
     Attributes:
         path: str, path of the dataset.
         size: int, image size.
+        count: int, total samples of the dataset.
     """
     def __init__(self, path, size=256):
         self.path = path
         self.size = size
+
+        env = lmdb.open(self.path)
+        with env.begin(write=False) as txn:
+            self.count = txn.stat()['entries']
 
     def reader(self):
         """Generator of reading images and normalizing for training.
