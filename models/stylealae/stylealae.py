@@ -5,7 +5,6 @@ from ..alae import ALAE
 from .encoder import Encoder
 from .generator import Generator
 from .maplatent import LatentMap
-from .lreqadam import LrEqAdam
 
 
 class StyleAlae(ALAE):
@@ -34,12 +33,8 @@ class StyleAlae(ALAE):
         self.prepare(self.latent_dim,
                      self.settings['gamma'],
                      self.settings['lr'],
-                     0.,
+                     self.settings['beta2'],
                      self.settings['beta2'])
-        
-        self.ed_opt = LrEqAdam(self.settings['lr'], self.settings['beta2'])
-        self.fg_opt = LrEqAdam(self.settings['lr'], self.settings['beta2'])
-        self.eg_opt = LrEqAdam(self.settings['lr'], self.settings['beta2'])
 
     def set_level(self, level):
         """Set training level for progressive growing.
