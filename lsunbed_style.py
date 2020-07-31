@@ -79,6 +79,7 @@ class StyleLsunBed(StyleAlae):
             'max_channels': 256,
             'out_channels': 3,
             'lr': 0.0015,
+            'beta1': 0.9,
             'beta2': 0.99,
             'gamma': 10,
         }

@@ -76,6 +76,7 @@ class StyleMNIST(StyleAlae):
             'max_channels': 256,
             'out_channels': 1,
             'lr': 1e-4,
+            'beta1': 0.9,
             'beta2': 0.99,
             'gamma': 10,
         }
