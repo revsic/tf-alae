@@ -18,10 +18,10 @@ class LatentMap(tf.keras.Model):
 
         self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
         self.blocks = tf.keras.Sequential([
-            tf.keras.layers.Dense(self.hidden_dim, activation=self.leaky_relu, lrmul=0.1)
+            tf.keras.layers.Dense(self.hidden_dim, activation=self.leaky_relu)
             for _ in range(self.num_layer - 1)])
 
-        self.blocks.add(tf.keras.layers.Dense(self.latent_dim, lrmul=0.1))
+        self.blocks.add(tf.keras.layers.Dense(self.latent_dim))
 
     def call(self, z):
         """Fully-connected pass.
