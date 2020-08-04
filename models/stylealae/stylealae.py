@@ -102,7 +102,7 @@ class StyleAlae(ALAE):
         Returns:
             Dict[str, Any], settings.
         """
-        num_layers = np.log2(imgsize) - 1
+        num_layers = int(np.log2(imgsize)) - 1
         return {
             'latent_dim': 512,
             'num_layers': num_layers,
