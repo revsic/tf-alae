@@ -121,7 +121,7 @@ class Encoder(tf.keras.Model):
                 else:
                     raise ValueError('invalid argument `policy`')
 
-                self.conv2 = tf.keras.Sequential([conv2, Blur()])
+                self.conv2 = tf.keras.Sequential([Blur(), conv2])
 
             self.normalize = Normalize2D()
 
@@ -169,7 +169,7 @@ class Encoder(tf.keras.Model):
             # [B, C]
             mean, var = tf.nn.moments(x, axes=[1, 2])
             # [B, C]
-            log_sigma = tf.log(tf.sqrt(var) + eps)
+            log_sigma = tf.math.log(tf.sqrt(var) + eps)
             # [B, Cx2]
             stat = tf.concat([mean, log_sigma], axis=-1)
             # [B, latent_dim]
