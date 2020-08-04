@@ -27,19 +27,23 @@ class Encoder(tf.keras.Model):
 
         resolution = 4 * 2 ** (self.num_layer - 1)
         channels = self.init_channels
-        self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
+        out_dim = min(self.max_channels, channels)
 
         self.blocks = []
         self.from_rgb = []
         for i in range(self.num_layer):
+            # rgb to intermediates
+            self.from_rgb.append(tf.keras.layers.Conv2D(out_dim, 1))
+            # update layer infos
             channels *= 2
             resolution //= 2
+            in_dim = out_dim
             out_dim = min(self.max_channels, channels)
-            self.from_rgb.append(tf.keras.layers.Conv2D(out_dim, 1))
+            # add block
             self.blocks.append(
-                Encoder.Block(out_dim,
+                Encoder.Block(in_dim, out_dim,
                               self.latent_dim,
-                              i > 0,
+                              i < self.num_layer - 1,
                               'pool' if resolution < 128 else 'conv'))
 
     def set_level(self, level):
@@ -54,7 +58,7 @@ class Encoder(tf.keras.Model):
         Returns:
             List[tf.Variable], trainable variables.
         """
-        start = self.num_layer - self.level - 1
+        start = self.num_layer - 1 - self.level
         var = self.from_rgb[start].trainable_variables
         for block in self.blocks[start:]:
             var += block.trainable_variables
@@ -71,8 +75,9 @@ class Encoder(tf.keras.Model):
         styles = tf.zeros([bsize, self.latent_dim], dtype=tf.float32)
 
         start = self.num_layer - self.level - 1
+
         x = self.from_rgb[start](x)
-        x = self.leaky_relu(x)
+        x = tf.nn.leaky_relu(x, alpha=0.2)
 
         for block in self.blocks[start:]:
             x, s1, s2 = block(x)
@@ -83,38 +88,42 @@ class Encoder(tf.keras.Model):
     class Block(tf.keras.Model):
         """Encoder block for progressive downsampling.
         """
-        def __init__(self, out_dim, latent_dim, preconv, downsample):
+        def __init__(self, in_dim, out_dim, latent_dim, downsample, policy=None):
             """Initializer.
             Args:
+                in_dim: int, number of the input channels.
                 out_dim: int, number of the output channels.
                 latent_dim: int, size of the latent vector.
-                preconv: bool, whether run convolution for downsampling or not.
-                downsample: str, down sampling policy for pre-convolution options.
+                downsample: bool, whether run convolution for downsampling or not.
+                policy: Optional[str], down sampling policyfor pre-convolution options.
                     - pool: (3x3, stride=1)-conv -> (2x2)-avgpool
                     - conv: (3x3, stride=2)-conv
             """
             super(Encoder.Block, self).__init__()
+            self.in_dim = in_dim
             self.out_dim = out_dim
             self.latent_dim = latent_dim
-            self.preconv = preconv
             self.downsample = downsample
+            self.policy = policy
 
-            if self.preconv:
-                self.blur = Blur()
-                if self.downsample == 'pool':
-                    self.downsample_conv = tf.keras.Sequential([
+            self.conv1 = tf.keras.layers.Conv2D(
+                self.in_dim, 3, 1, padding='SAME', use_bias=False)
+
+            if self.downsample:
+                if self.policy == 'pool':
+                    conv2 = tf.keras.Sequential([
                         tf.keras.layers.Conv2D(
-                            out_dim, 3, 1, padding='SAME', use_bias=False),
+                            self.out_dim, 3, 1, padding='SAME', use_bias=False),
                         tf.keras.layers.AveragePooling2D(2)])
+                elif self.policy == 'conv':
+                    conv2 = tf.keras.layers.Conv2D(
+                        self.out_dim, 3, 2, padding='SAME', use_bias=False)
                 else:
-                    self.downsample_conv = tf.keras.layers.Conv2D(
-                        out_dim, 3, 2, padding='SAME', use_bias=False)
+                    raise ValueError('invalid argument `policy`')
 
-            self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
+                self.conv2 = tf.keras.Sequential([conv2, Blur()])
+
             self.normalize = Normalize2D()
-
-            self.conv = tf.keras.layers.Conv2D(
-                self.out_dim, 3, 1, padding='SAME', use_bias=False)
 
             self.style_proj1 = tf.keras.layers.Dense(self.latent_dim)
             self.style_proj2 = tf.keras.layers.Dense(self.latent_dim)
@@ -124,38 +133,44 @@ class Encoder(tf.keras.Model):
             Args:
                 x: tf.Tensor, [B, H, W, in_dim], input feature map.
             Returns:
-                x: tf.Tensor, [B, H/2, W/2, out_dim], whitened feature map.
+                x: tf.Tensor, [B, H', W', C], whitened feature map,
+                    H' = H/2 if downsample else H,
+                    W' = W/2 if downsample else W.
+                    C  = out_dim if downsample else in_dim.
                 style1: tf.Tensor, [B, latent_dim], first style.
                 style2: tf.Tensor, [B, latent_dim], second style.
             """
-            if self.preconv:
-                # [B, H, W, in_dim]
-                x = self.blur(x)
-                # [B, H/2, W/2, out_dim]
-                x = self.downsample_conv(x)
-                x = self.leaky_relu(x)
-
-            # [B, out_dim]
-            mean, var = tf.nn.moments(x, axes=[1, 2])
-            # [B, out_dim * 2]
-            stat = tf.concat([mean, var], axis=-1)
             # [B, latent_dim]
-            style1 = self.style_proj1(stat)
-
-            # [B, H/2, W/2, out_dim]
+            style1 = self.extract_style(x, self.style_proj1)
+            # [B, H, W, in_dim]
             x = self.normalize(x)
-            # [B, H/2, W/2, out_dim]
-            x = self.conv(x)
-            x = self.leaky_relu(x)
+            # [B, H, W, in_dim]
+            x = tf.nn.leaky_relu(self.conv1(x), alpha=0.2)
 
-            # [B, out_dim]
-            mean, var = tf.nn.moments(x, axes=[1, 2])
-            # [B, out_dim * 2]
-            stat = tf.concat([mean, var], axis=-1)
             # [B, latent_dim]
-            style2 = self.style_proj2(stat)
-
-            # [B, H/2, W/2, out_dim]
-            x = self.normalize(x)
+            style2 = self.extract_style(x, self.style_proj2)
+            if self.downsample:
+                # [B, H, W, out_dim]
+                x = self.normalize(x)
+                # [B, H', W', out_dim]
+                x = tf.nn.leaky_relu(self.conv2(x), alpha=0.2)
 
             return x, style1, style2
+
+        def extract_style(self, x, proj, eps=1e-8):
+            """Extract style vector from feature map.
+            Args:
+                x: tf.Tensor, [B, H, W, C], input tensor.
+                proj: tf.keras.Model, projection layer,
+                    Callable, tf.Tensor[..., Cx2] -> tf.Tensor[..., latent_dim]
+            Returns:
+                style: tf.Tensor, [B, latent_dim], style vector.
+            """
+            # [B, C]
+            mean, var = tf.nn.moments(x, axes=[1, 2])
+            # [B, C]
+            log_sigma = tf.log(tf.sqrt(var) + eps)
+            # [B, Cx2]
+            stat = tf.concat([mean, log_sigma], axis=-1)
+            # [B, latent_dim]
+            return proj(stat)
