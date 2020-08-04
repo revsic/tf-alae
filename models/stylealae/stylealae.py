@@ -112,6 +112,7 @@ class StyleAlae(ALAE):
             'max_channels': 512,
             'out_channels': 3,
             'lr': 0.001,
+            'beta1': 0.9,
             'beta2': 0.99,
             'gamma': 10,
         }
