@@ -102,10 +102,7 @@ class Generator(tf.keras.Model):
                 self.conv1 = tf.keras.Sequential([
                     Repeat2D(2),
                     tf.keras.layers.Conv2D(
-                        self.out_dim, 3,
-                        strides=1,
-                        padding='same',
-                        use_bias=False)])
+                        self.out_dim, 3, 1, padding='same', use_bias=False)])
             elif self.policy == 'deconv':
                 self.conv1 = tf.keras.layers.Conv2DTranspose(
                     self.out_dim, 3, strides=2, padding='same', use_bias=False)
