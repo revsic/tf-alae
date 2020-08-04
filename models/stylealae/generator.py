@@ -136,12 +136,12 @@ class Generator(tf.keras.Model):
             # [B, H', W', out_dim]
             x = self.apply_noise(self.conv1(x), self.noise_affine1)
             # [B, H', W', out_dim]
-            x = self.apply_style(x, style1, self.latent_proj1)
+            x = self.apply_style(x, s1, self.latent_proj1)
 
             # [B, H', W', out_dim]
-            x = self.add_noise(self.conv2(x), self.noise_affine2)
+            x = self.apply_noise(self.conv2(x), self.noise_affine2)
             # [B, H', W', out_dim]
-            x = self.apply_style(x, style2, self.latent_proj2)
+            x = self.apply_style(x, s2, self.latent_proj2)
             return x
 
         def apply_noise(self, x, affine):
