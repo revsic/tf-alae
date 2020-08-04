@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from .utils import AffineTransform, Normalize2D, Repeat2D, Blur
+from .utils import AffineTransform, Repeat2D, Blur, normalize2d
 
 
 class Generator(tf.keras.Model):
@@ -33,14 +33,16 @@ class Generator(tf.keras.Model):
         self.blocks = []
         self.to_rgb = []
         for i in range(self.num_layer):
-            out_dim = min(self.max_channels, channels)
             self.blocks.append(
                 Generator.Block(out_dim,
                                 i > 0,
                                 'repeat' if resolution < 128 else 'deconv'))
+            # intermediates to rgb
+            self.to_rgb.append(tf.keras.layers.Conv2D(self.out_channels, 1))
+            # update layer infos for next
             channels //= 2
             resolution *= 2
-            self.to_rgb.append(tf.keras.layers.Conv2D(self.out_channels, 1))
+            out_dim = min(self.max_channels, channels)
     
     def set_level(self, level):
         """Set training level, start from first block to last block.
@@ -79,44 +81,45 @@ class Generator(tf.keras.Model):
     class Block(tf.keras.Model):
         """Generator block for progressive growing.
         """
-        def __init__(self, out_dim, preconv, upsample):
+        def __init__(self, out_dim, upsample, policy=None):
             """Initializer.
             Args:
                 out_dim: int, number of channels of output feature map.
-                preconv: bool, whether run convolution for upsampling.
-                upsample: str, upsampling policy for pre-convolution.
+                upsample: bool, whether run convolution for upsampling.
+                policy: Optional[str], upsampling policy for pre-convolution.
                     - repeat: (2x2, repeat)-upsample -> (3x3, stride=1)-conv
                     - deconv: (3x3, stride=2)-conv2d transpose
             """
             super(Generator.Block, self).__init__()
             self.out_dim = out_dim
-            self.preconv = preconv
             self.upsample = upsample
+            self.policy = policy
 
-            if self.preconv:
-                if self.upsample == 'repeat':
-                    self.upsample_conv = tf.keras.Sequential([
-                        Repeat2D(2),
-                        tf.keras.layers.Conv2D(
-                            self.out_dim, 3,
-                            strides=1,
-                            padding='SAME',
-                            use_bias=False)])
-                elif self.upsample == 'deconv':
-                    self.upsample_conv = tf.keras.layers.Conv2DTranspose(
-                        self.out_dim, 3, 2, padding='SAME', use_bias=False)
-
-                self.blur = Blur()
+            if not self.upsample:
+                self.conv1 = tf.keras.layers.Conv2D(
+                    self.out_dim, 3, strides=1, padding='same', use_bias=False)
+            elif self.policy == 'repeat':
+                self.conv1 = tf.keras.Sequential([
+                    Repeat2D(2),
+                    tf.keras.layers.Conv2D(
+                        self.out_dim, 3,
+                        strides=1,
+                        padding='same',
+                        use_bias=False)])
+            elif self.policy == 'deconv':
+                self.conv1 = tf.keras.layers.Conv2DTranspose(
+                    self.out_dim, 3, strides=2, padding='same', use_bias=False)
+            else:
+                raise ValueError('invalid upsample, policy arguments pair')
     
-            self.leaky_relu = tf.keras.layers.LeakyReLU(0.2)
-            self.normalize = Normalize2D()
+            self.conv2 = tf.keras.layers.Conv2D(
+                self.out_dim, 3, 1, padding='SAME', use_bias=False)
+            
+            self.blur = Blur()
 
             self.noise_affine1 = AffineTransform([1, 1, 1, self.out_dim])
             self.latent_proj1 = tf.keras.layers.Dense(self.out_dim * 2)
 
-            self.conv = tf.keras.layers.Conv2D(
-                self.out_dim, 3, 1, padding='SAME', use_bias=False)
-            
             self.noise_affine2 = AffineTransform([1, 1, 1, self.out_dim])
             self.latent_proj2 = tf.keras.layers.Dense(self.out_dim * 2)
 
@@ -126,44 +129,62 @@ class Generator(tf.keras.Model):
                 x: tf.Tensor, [B, H, W, in_dim], input feature map.
                 s1: tf.Tensor, [B, latent_dim], first style.
                 s2: tf.Tensor, [B, latent_dim], second style.
+                noise: tf.Tensor, [1, H', W', 1], spatial noise tensor.
             Returns:
-                tf.Tensor, [B, Hx2, Wx2, out_dim], next feature map.
+                tf.Tensor, [B, H', W', out_dim], colored feature map,
+                    H' = Hx2 if upsample else H,
+                    W' = Wx2 if upsample else W.
             """
-            if self.preconv:
-                # [B, Hx2, Wx2, out_dim]
-                x = self.upsample_conv(x)
-                x = self.blur(x)
+            # [B, H', W', out_dim]
+            x = self.conv1(x)
+            x = self.blur(x)
+            # [B, H', W', out_dim]
+            x = self.apply_noise(x, self.noise_affine1)
+            # [B, H', W', out_dim]
+            x = self.apply_style(x, style1, self.latent_proj1)
 
-            shape = tf.shape(x)
-            # [1, Hx2, Wx2, 1]
-            noise = tf.random.normal([1, shape[1], shape[2], 1])
-            # [B, Hx2, Wx2, out_dim]
-            x = self.leaky_relu(x + self.noise_affine1(noise))
-            # [B, Hx2, Wx2, out_dim]
-            x = self.normalize(x)
-
-            # [B, out_dim x 2]
-            s1 = self.latent_proj1(s1)
-            # [B, 2, out_dim]
-            s1 = tf.reshape(s1, [-1, 2, self.out_dim])
-            # [B, Hx2, Wx2, out_dim]
-            x = s1[:, 0, None, None, :] + x * s1[:, 1, None, None, :]
-
-            # [B, Hx2, Wx2, out_dim]
-            x = self.conv(x)
-
-            # [1, Hx2, Wx2, 1]
-            noise = tf.random.normal([1, shape[1], shape[2], 1])
-            # [B, Hx2, Wx2, out_dim]
-            x = self.leaky_relu(x + self.noise_affine2(noise))
-            # [B, Hx2, Wx2, out_dim]
-            x = self.normalize(x)
-
-            # [B, out_dim x 2]
-            s2 = self.latent_proj2(s2)
-            # [B, 2, out_dim]
-            s2 = tf.reshape(s2, [-1, 2, self.out_dim])
-            # [B, Hx2, Wx2, out_dim]
-            x = s2[:, 0, None, None, :] + x * s2[:, 1, None, None, :]
-
+            # [B, H', W', out_dim]
+            x = self.conv2(x)
+            x = self.blur(x)
+            # [B, H', W', out_dim]
+            x = self.add_noise(x, self.noise_affine2)
+            # [B, H', W', out_dim]
+            x = self.apply_style(x, style2, self.latent_proj2)
             return x
+
+        def apply_noise(self, x, affine):
+            """Apply spatial noise to feature map.
+            Args:
+                x: tf.Tensor, [B, H, W, C], input tensor.
+                affine: tf.keras.Model, affine transformation layer for noise vector,
+                    Callable, tf.Tensor[..., 1] -> tf.Tensor[..., C]
+            Returns:
+                x: tf.Tensor, [B, H, W, C], applied tensor.
+            """
+            # B, H, W, C
+            shape = tf.shape(x)
+            # [1, H, W, 1]
+            noise = tf.random.normal([1, shape[1], shape[2], 1])
+            # [B, H, W, C]
+            x = tf.nn.leaky_relu(x + affine(noise), alpha=0.2)
+            return x
+
+        def apply_style(self, x, style, proj, eps=1e-8):
+            """Apply channel-wise styles to feature map.
+            Args:
+                x: tf.Tensor, [B, H, W, C], input tensor.
+                style: tf.Tensor, [B, latent_dim], style vector.
+                proj: tf.keras.Model, style projection layer,
+                    Callable, tf.Tensor[..., latent_dim] -> tf.Tensor[..., Cx2]
+            Returns:
+                x: tf.Tensor, [B, H, W, C], colored tensor.
+            """
+            channels = x.shape[-1]
+            # [B, Cx2]
+            style = proj(style)
+            # [B, C]
+            mu, log_sigma = style[:, :channels], style[:, channels:]
+            # [B, H, W, C]
+            x = normalize2d(x, eps=eps)
+            # [B, H, W, C]
+            return mu[:, None, None] + tf.math.exp(log_sigma[:, None, None]) * x
