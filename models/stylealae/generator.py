@@ -187,4 +187,4 @@ class Generator(tf.keras.Model):
             # [B, H, W, C]
             x = normalize2d(x, eps=eps)
             # [B, H, W, C]
-            return mu[:, None, None] + tf.math.exp(log_sigma[:, None, None]) * x
+            return mu[:, None, None] + tf.exp(log_sigma[:, None, None]) * x
