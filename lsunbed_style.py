@@ -5,6 +5,7 @@ import os
 import numpy as np
 import tensorflow as tf
 
+from utils.style_cont import LevelController
 from utils.trainer import Callback, Trainer
 from datasets.lsunbed import LsunBed
 from models.stylealae import StyleAlae
@@ -24,28 +25,6 @@ PARSER.add_argument('--evalset', default='D:\\bedroom_val_lmdb\\bedroom_val_lmdb
 NUM_LAYERS = 7
 RESOLUTION = (NUM_LAYERS + 1) ** 2
 EPOCHS_PER_LEVEL = 1
-
-
-class LevelController(Callback):
-    """Training level controller.
-    """
-    def __init__(self,
-                 num_layers=NUM_LAYERS,
-                 epochs_per_level=EPOCHS_PER_LEVEL):
-        super(LevelController, self).__init__()
-        self.num_layers = num_layers
-        self.epochs_per_level = epochs_per_level
-
-    def interval(self):
-        """Set callback interval as epoch.
-        """
-        return -1
-
-    def __call__(self, model, _, epochs):
-        """Set training level of models based on epochs.
-        """
-        level = min(self.num_layers - 1, epochs // self.epochs_per_level)
-        model.set_level(level)
 
 
 class StyleLsunBed(StyleAlae):
@@ -105,10 +84,11 @@ def train(args):
     if not os.path.exists(args.ckptdir):
         os.makedirs(args.ckptdir)
 
+    controller = LevelController(NUM_LAYERS, EPOCHS_PER_LEVEL)
     trainer = Trainer(summary_path,
                       ckpt_path,
                       args.ckpt_interval,
-                      LevelController())
+                      controller)
     trainer.train(
         stylealae,
         args.epochs,
