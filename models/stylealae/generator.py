@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from .utils import AffineTransform, Repeat2D, Blur, normalize2d
+from .utils import AffineTransform, Repeat2D, Blur, Normalize2D
 
 
 class Generator(tf.keras.Model):
@@ -96,23 +96,24 @@ class Generator(tf.keras.Model):
             self.policy = policy
 
             if not self.upsample:
-                self.conv1 = tf.keras.layers.Conv2D(
+                conv1 = tf.keras.layers.Conv2D(
                     self.out_dim, 3, strides=1, padding='same', use_bias=False)
             elif self.policy == 'repeat':
-                self.conv1 = tf.keras.Sequential([
+                conv1 = tf.keras.Sequential([
                     Repeat2D(2),
                     tf.keras.layers.Conv2D(
                         self.out_dim, 3, 1, padding='same', use_bias=False)])
             elif self.policy == 'deconv':
-                self.conv1 = tf.keras.layers.Conv2DTranspose(
+                conv1 = tf.keras.layers.Conv2DTranspose(
                     self.out_dim, 3, strides=2, padding='same', use_bias=False)
             else:
                 raise ValueError('invalid upsample, policy arguments pair')
-    
+
+            self.conv1 = tf.keras.Sequential([conv1, Blur()])
             self.conv2 = tf.keras.layers.Conv2D(
                 self.out_dim, 3, 1, padding='SAME', use_bias=False)
-            
-            self.blur = Blur()
+
+            self.normalize = Normalize2D()
 
             self.noise_affine1 = AffineTransform([1, 1, 1, self.out_dim])
             self.latent_proj1 = tf.keras.layers.Dense(self.out_dim * 2)
@@ -133,18 +134,12 @@ class Generator(tf.keras.Model):
                     W' = Wx2 if upsample else W.
             """
             # [B, H', W', out_dim]
-            x = self.conv1(x)
-            x = self.blur(x)
-            # [B, H', W', out_dim]
-            x = self.apply_noise(x, self.noise_affine1)
+            x = self.apply_noise(self.conv1(x), self.noise_affine1)
             # [B, H', W', out_dim]
             x = self.apply_style(x, style1, self.latent_proj1)
 
             # [B, H', W', out_dim]
-            x = self.conv2(x)
-            x = self.blur(x)
-            # [B, H', W', out_dim]
-            x = self.add_noise(x, self.noise_affine2)
+            x = self.add_noise(self.conv2(x), self.noise_affine2)
             # [B, H', W', out_dim]
             x = self.apply_style(x, style2, self.latent_proj2)
             return x
@@ -166,7 +161,7 @@ class Generator(tf.keras.Model):
             x = tf.nn.leaky_relu(x + affine(noise), alpha=0.2)
             return x
 
-        def apply_style(self, x, style, proj, eps=1e-8):
+        def apply_style(self, x, style, proj):
             """Apply channel-wise styles to feature map.
             Args:
                 x: tf.Tensor, [B, H, W, C], input tensor.
@@ -182,6 +177,6 @@ class Generator(tf.keras.Model):
             # [B, C]
             mu, log_sigma = style[:, :channels], style[:, channels:]
             # [B, H, W, C]
-            x = normalize2d(x, eps=eps)
+            x = self.normalize(x)
             # [B, H, W, C]
             return mu[:, None, None] + tf.exp(log_sigma[:, None, None]) * x
