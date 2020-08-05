@@ -32,9 +32,7 @@ python lsunbed_style.py train
 
 Mlp-ALAE + MNIST
 
-<img src="./rsrc/mnist_mlp_disc.jpg" width="30%">
-<img src="./rsrc/mnist_mlp_gen.jpg" width="30%">
-<img src="./rsrc/mnist_mlp_latent.jpg" width="30%">
+![mnist mlp learning curve](rsrc/mnist_mlp.jpg)
 
 ## Sample
 
