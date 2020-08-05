@@ -19,21 +19,12 @@ PARSER.add_argument('--batch-size', default=128, type=int)
 
 
 class MnistAlae(MlpAlae):
-    """MLP-ALAE for MNIST dataset.
+    """MLP-ALAE for MNIST dataset (flatten, conditioned).
     """
     def __init__(self, settings=None):
+        if settings is None:
+            settings = MnistAlae.default_setting()
         super(MnistAlae, self).__init__(settings)
-    
-    def encode(self, x):
-        """Encode the input tensors to latent vectors.
-            + flatten inputs.
-        Args:
-            _: tf.Tensor, [B, ...], input tensors.
-        Returns:
-            _: tf.Tensor, [B, latent_dim], latent vectors.
-        """
-        x = tf.reshape(x, [x.shape[0], -1])
-        return super().encode(x)
 
     def generate(self, z):
         """Generate output tensors from latent vectors.
@@ -44,8 +35,26 @@ class MnistAlae(MlpAlae):
             _: tf.Tensor, [B, ...], output tensors.
         """
         x = super().generate(z)
-        x = tf.clip_by_value(x[:, :784], -1, 1)
+        x = tf.clip_by_value(x[:, :784], 0, 1)
         return tf.reshape(x, [-1, 28, 28, 1])
+
+    @staticmethod
+    def default_setting(z_dim=128, latent_dim=50, output_dim=784 + 10):
+        """Default settings.
+        """
+        return {
+            'z_dim': z_dim,
+            'latent_dim': latent_dim,
+            'output_dim': output_dim,
+            'gamma': 10,
+            'f': [1024, latent_dim],
+            'g': [1024, output_dim],
+            'e': [1024, latent_dim],
+            'd': [1024, 1],
+            'lr': 0.002,
+            'beta1': 0.0,
+            'beta2': 0.99,
+        }
 
 
 def train(args):
@@ -65,8 +74,8 @@ def train(args):
     trainer.train(
         mlpalae,
         args.epochs,
-        mnist.cdatasets(bsize=args.batch_size),
-        mnist.cdatasets(bsize=args.batch_size, train=False),
+        mnist.datasets(bsize=args.batch_size, flatten=True, condition=True),
+        mnist.datasets(bsize=args.batch_size, flatten=True, condition=True, train=False),
         len(mnist.x_train) // args.batch_size)
 
     return 0
