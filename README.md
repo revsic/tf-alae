@@ -50,14 +50,6 @@ Mlp-ALAE + MNIST
 
 ## Sample
 
-two to three
+MNIST 0 ~ 4 polymorph
 
-![two to three](./rsrc/two2three.png)
-
-three to six
-
-![three to six](./rsrc/three2six.png)
-
-eight to nine
-
-![eight to nine](./rsrc/eight2nine.png)
+![mnist polymorph](rsrc/mnist_polymorph.png)
