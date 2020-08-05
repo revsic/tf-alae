@@ -8,7 +8,7 @@ import tensorflow as tf
 from utils.style_cont import LevelController
 from utils.trainer import Callback, Trainer
 from datasets.lsunbed import LsunBed
-from models.stylealae import StyleAlae
+from models.experimental.stylealae import StyleAlae
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('option', type=str, default='train')

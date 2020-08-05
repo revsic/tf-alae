@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from ..alae import ALAE
+from ...alae import ALAE
 from .encoder import Encoder
 from .generator import Generator
 from .maplatent import LatentMap
