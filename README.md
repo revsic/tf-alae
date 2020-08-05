@@ -6,7 +6,7 @@
 
 To train the mnist model
 ```
-python trainer.py
+python mnist_mlp.py train
 ```
 
 To open tensorboard summary
@@ -14,32 +14,30 @@ To open tensorboard summary
 tensorboard --logdir summary
 ```
 
-Jupyter notebook
-- [mnist_expr.ipynb](./experiments/mnist_expr.ipynb): MLP-ALAE MNIST experiments.
-- [mnist_stylealae.ipynb](./experiments/mnist_stylealae.ipynb): StyleALAE MNIST experiments.
+Currently, StyleALAE is experimental.
 
-## Structure
+```bash
+# to train mnist
+python mnist_style.py train
 
-- [alae.py](./models/alae.py): Abstracted ALAE object.
-- [mlpalae.py](./models/mlpalae.py): MLP-ALAE implementation.
-- [stylealae.py](./models/stylealae/stylealae.py): StyleALAE implementation.
-- [trainer.py](./utils/trainer.py): ALAE trainer.
-- [mnist.py](./datasets/mnist.py): MNIST wrapper.
+# to train lsunbed
+python lsunbed_style.py train
+```
 
-## Autoencoded
+## Jupyter notebook
 
-![enumeration](./rsrc/enum.png)
+- [mnist_expr.ipynb](./experiments/mnist_expr.ipynb): MNIST interpolation with Mlp-ALAE
 
-## Linear transform
+## Sample
 
-- two - three
+two to three
 
-![polymorph number two to three](./rsrc/two2three.png)
+![two to three](./rsrc/two2three.png)
 
-- eight - nine
+three to six
 
-![polymorph number eight to nine](./rsrc/eight2nine.png)
+![three to six](./rsrc/three2six.png)
 
-- three - six
+eight to nine
 
-![polymorph number three to six](./rsrc/three2six.png)
+![eight to nine](./rsrc/eight2nine.png)
