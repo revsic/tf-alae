@@ -67,8 +67,8 @@ class Trainer:
                 self.callback(model, step, epoch)
 
             # training phase
-            with tqdm.tqdm(total=trainlen) as pbar:
-                for datum in tqdm.tqdm(trainset):
+            with tqdm.tqdm(total=trainlen, leave=False) as pbar:
+                for datum in trainset:
                     step += 1
                     losses = model.trainstep(datum)
                     self.write_summary(losses, step)
