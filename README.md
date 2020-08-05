@@ -24,6 +24,20 @@ python mnist_style.py train
 python lsunbed_style.py train
 ```
 
+To use released checkpoints, download files from [release](https://github.com/revsic/tf-alae/releases) and unzip it.
+
+Following is example of [MNIST-MLP](https://github.com/revsic/tf-alae/releases/tag/MnistMlp).
+```py
+import json
+from mnist_mlp import MnistAlae
+
+with open('settings.json') as f:
+    settings = json.load(f)
+
+alae = MnistAlae(settings)
+alae.load_weights('./mnist_mlp/mnist_mlp')
+```
+
 ## Jupyter notebook
 
 - [mnist_expr.ipynb](./experiments/mnist_expr.ipynb): MNIST interpolation with Mlp-ALAE
