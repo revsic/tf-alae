@@ -33,6 +33,7 @@ class MNIST:
                  bufsiz=10000,
                  padding=None,
                  flatten=True,
+                 condition=False,
                  train=True):
         """Image dataset.
         Args:
@@ -40,12 +41,13 @@ class MNIST:
             bufsiz: int, buffer size for shuffle.
             padding: int, pad side or not.
             flatten: bool, whether flatten image or not.
+            condition: bool, whether add condition or not.
             train: bool, whether training mode or not.
         Returns:
             tf.data.Dataset, tensorflow dataset object,
                 Iterable[tf.Tensor=[B, 28, 28]], iterable.
         """
-        x, _ = self.rawdata(train)
+        x, y = self.rawdata(train)
         if padding is not None:
             x = np.pad(
                 x,
@@ -53,23 +55,15 @@ class MNIST:
                 'constant',
                 constant_values=-1)
         if flatten:
-            x = x.reshape(-1, 784)
-        return tf.data.Dataset.from_tensor_slices(x) \
-            .shuffle(bufsiz) \
-            .batch(bsize)
+            x = x.reshape(x.shape[0], -1)
+            if condition:
+                x = np.concatenate([x, np.eye(10)[y]], axis=-1)
+        elif condition:
+            _, height, width, _ = x.shape
+            cond = np.eye(10)[y]
+            cond = np.tile(cond[:, None, None], [1, height, width, 1])
+            x = np.concatenate([x, cond], axis=-1)
 
-    def cdatasets(self, bsize=128, bufsiz=10000, train=True):
-        """Conditioned dataset.
-        Args:
-            bsize: int, batch size.
-            bufsiz: int, buffer size for shuffle.
-            train: bool, whether training mode or not.
-        Returns:
-            tf.data.Dataset, tensorflow dataset object,
-                Iterable[tf.Tensor=[B, 784 + 10]], iterable.
-        """
-        x, y = self.rawdata(train)
-        data = np.concatenate([x.reshape(-1, 784), np.eye(10)[y]], axis=-1)
-        return tf.data.Dataset.from_tensor_slices(data) \
+        return tf.data.Dataset.from_tensor_slices(x) \
             .shuffle(bufsiz) \
             .batch(bsize)
