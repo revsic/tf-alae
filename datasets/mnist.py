@@ -32,7 +32,7 @@ class MNIST:
                  bsize=128,
                  bufsiz=10000,
                  padding=None,
-                 flatten=True,
+                 flatten=False,
                  condition=False,
                  train=True):
         """Image dataset.
