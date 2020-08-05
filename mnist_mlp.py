@@ -10,7 +10,7 @@ from models.mlpalae import MlpAlae
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('option', type=str, default='train')
-PARSER.add_argument('--name', default='baseline')
+PARSER.add_argument('--name', default='mnist_mlp')
 PARSER.add_argument('--summarydir', default='./summary')
 PARSER.add_argument('--ckptdir', default='./ckpt')
 PARSER.add_argument('--epochs', default=50, type=int)
