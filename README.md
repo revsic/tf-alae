@@ -28,6 +28,14 @@ python lsunbed_style.py train
 
 - [mnist_expr.ipynb](./experiments/mnist_expr.ipynb): MNIST interpolation with Mlp-ALAE
 
+## Learning Curve
+
+Mlp-ALAE + MNIST
+
+<img src="./rsrc/mnist_mlp_disc.jpg" width="30%">
+<img src="./rsrc/mnist_mlp_gen.jpg" width="30%">
+<img src="./rsrc/mnist_mlp_latent.jpg" width="30%">
+
 ## Sample
 
 two to three
