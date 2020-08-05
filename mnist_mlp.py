@@ -15,6 +15,7 @@ PARSER.add_argument('--summarydir', default='./summary')
 PARSER.add_argument('--ckptdir', default='./ckpt')
 PARSER.add_argument('--epochs', default=50, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
+PARSER.add_argument('--batch-size', default=128, type=int)
 
 
 class MnistAlae(MlpAlae):
@@ -61,7 +62,13 @@ def train(args):
         os.makedirs(args.ckptdir)
 
     trainer = Trainer(summary_path, ckpt_path)
-    trainer.train(mlpalae, args.epochs, mnist.cdatasets(), mnist.cdatasets(train=False))
+    trainer.train(
+        mlpalae,
+        args.epochs,
+        mnist.cdatasets(bsize=args.batch_size),
+        mnist.cdatasets(bsize=args.batch_size, train=False),
+        len(mnist.x_train) // args.batch_size)
+
     return 0
 
 
