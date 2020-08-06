@@ -77,7 +77,7 @@ class Trainer:
                             step % self.ckpt_interval == 0:
                         # if training set is too large
                         _, flat = model(datum)
-                        self.write_image(flat, step, train=False)
+                        self.write_image(datum, flat, step, train=False)
                         model.save_weights(self.ckpt_path)
                     
                     if cb_intval is not None and \
@@ -87,7 +87,7 @@ class Trainer:
                     pbar.update()
 
             _, flat = model(datum)
-            self.write_image(flat, step)
+            self.write_image(datum, flat, step)
 
             # test phase
             metrics = []
@@ -97,7 +97,7 @@ class Trainer:
             self.write_summary(self.mean_metric(metrics), step, train=False)
 
             _, flat = model(datum)
-            self.write_image(flat, step, train=False)
+            self.write_image(datum, flat, step, train=False)
 
             # write checkpoint
             model.save_weights(self.ckpt_path)
@@ -114,7 +114,7 @@ class Trainer:
             for key, value in metrics.items():
                 tf.summary.scalar(key, value, step=step)
 
-    def write_image(self, flat, step, train=True, name='image'):
+    def write_image(self, datum, flat, step, train=True, name='image'):
         """Write image to the tensorboard summary.
         Args:
             flat: tf.Tensor, [B, ...], autoencoded image.
@@ -128,6 +128,7 @@ class Trainer:
         with summary.as_default():
             # write tensorboard summary
             tf.summary.image(name, flat[idx:idx + 1], step=step)
+            tf.summary.image(name + '_gt', datum[idx:idx + 1], step=step)
 
     def mean_metric(self, metrics):
         """Compute mean of the metrics.
