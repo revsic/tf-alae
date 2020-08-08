@@ -35,6 +35,9 @@ class StyleAlae(ALAE):
                      self.settings['lr'],
                      self.settings['beta2'],
                      self.settings['beta2'])
+        
+        self.rctor_opt = tf.keras.optimizers.Adam(
+            self.settings['lr'], self.settings['beta1'], self.settings['beta2'])
 
     def set_level(self, level):
         """Set training level for progressive growing.
@@ -95,6 +98,25 @@ class StyleAlae(ALAE):
                          hidden_dim=self.latent_dim)
         disc.build((None, self.latent_dim))
         return disc
+
+    @tf.function
+    def _rctor_loss(self, _, x):
+        rctor = self.gen(self.enc(x))
+        _, height, width, _ = rctor.shape
+        x = tf.image.resize(x, [height, width])
+        return tf.reduce_mean(tf.abs(rctor - x))
+
+    def losses(self, x):
+        # losses = super(StyleAlae, self).losses(x)
+        losses = {}
+        losses['rctor'] = self._rctor_loss(None, x)
+        return losses
+
+    def trainstep(self, x):
+        # losses = super(StyleAlae, self).trainstep(x)
+        losses = {}
+        _, losses['rctor'] = self._update(x, self._rctor_loss, self.eg_var, self.rctor_opt)
+        return losses
 
     @staticmethod
     def default_setting(imgsize=256):
