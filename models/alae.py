@@ -8,17 +8,19 @@ class ALAE(tf.keras.Model):
     def __init__(self):
         super(ALAE, self).__init__()
 
-    def prepare(self, z_dim, gamma, learning_rate, beta1, beta2):
+    def prepare(self, z_dim, gamma, learning_rate, beta1, beta2, disc_gclip=None):
         """Prepare for training and inference.
         Args:
             z_dim: int, size of the latent prior.
             gamma: float, coefficient for gradient penalty in loss term.
             learning_rate: float, learning rate.
             beta1: float, beta1 for adam optimizer.
-            beta2: flaot, beta2 for adam optimizer.
+            beta2: float, beta2 for adam optimizer.
+            disc_gclip: Optional[float], discriminator gradient clipping constraints. 
         """
         self.z_dim = z_dim
         self.gamma = gamma
+        self.disc_gclip = disc_gclip
 
         self.map = self.mapper()
         self.gen = self.generator()
@@ -83,7 +85,7 @@ class ALAE(tf.keras.Model):
         # gradient regularizer
         grad = tape.gradient(realloss, self.ed_var)
         gradreg = self.gamma / 2 * tf.reduce_mean([
-            tf.reduce_mean(tf.square(g)) for g in grad if g is not None])
+            tf.reduce_mean(tf.square(g)) for g in grad])
 
         return fakeloss + realloss + gradreg
 
@@ -126,7 +128,7 @@ class ALAE(tf.keras.Model):
             'latent': self._latent_loss(z).numpy(),
         }
 
-    def _update(self, x, loss_fn, var, opt):
+    def _update(self, x, loss_fn, var, opt, grad_clip=None):
         """Update weights with gradient and optimizer.
         Args:
             x: tf.Tensor, [B, ...], output samples.
@@ -134,6 +136,7 @@ class ALAE(tf.keras.Model):
                 loss function.
             var: List[tf.Tensor], trainable variables.
             opt: tf.keras.optimizers.Optimizer, keras optimizer.
+            grad_clip: float, positive limits for clipping gradient.
         Returns:
             z: np.array, [B, z_dim], sampled latent prior.
             loss: np.array, [], loss value.
@@ -143,6 +146,8 @@ class ALAE(tf.keras.Model):
             loss = loss_fn(z, x)
         
         grad = tape.gradient(loss, var)
+        if grad_clip is not None:
+            grad = [tf.clip_by_value(g, -grad_clip, grad_clip) for g in grad]
         opt.apply_gradients(zip(grad, var))
         return z, loss
 
@@ -153,7 +158,7 @@ class ALAE(tf.keras.Model):
         Returns:
             Dict[str, np.array], loss values.
         """
-        _, dloss = self._update(x, self._disc_loss, self.ed_var, self.ed_opt)
+        _, dloss = self._update(x, self._disc_loss, self.ed_var, self.ed_opt, self.disc_gclip)
         _, gloss = self._update(x, self._gen_loss, self.fg_var, self.fg_opt)
         _, lloss = self._update(x, self._latent_loss, self.eg_var, self.eg_opt)
         return {
