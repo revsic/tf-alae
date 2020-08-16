@@ -15,13 +15,18 @@ PARSER.add_argument('option', type=str, default='train')
 PARSER.add_argument('--name', default='style_mnist')
 PARSER.add_argument('--summarydir', default='./summary')
 PARSER.add_argument('--ckptdir', default='./ckpt')
-PARSER.add_argument('--epochs', default=10, type=int)
+PARSER.add_argument('--epochs', default=70, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
 PARSER.add_argument('--batch_size', default=128, type=int)
 
 NUM_LAYERS = 4
 RESOLUTION = (NUM_LAYERS + 1) ** 2
-EPOCHS_PER_LEVEL = 2
+EPOCHS_PER_LEVEL = {
+    0: 0,
+    3: 1,
+    15: 2,
+    40: 3,
+}
 
 
 class StyleMNIST(StyleAlae):
@@ -41,7 +46,7 @@ class StyleMNIST(StyleAlae):
         Returns:
             _: tf.Tensor, [B, 32, 32, 1], output tensors.
         """
-        x = super().generate(z)
+        x = super().generate(z)[..., :1]
         return tf.clip_by_value(x, -1, 1)
 
     @staticmethod
@@ -49,13 +54,13 @@ class StyleMNIST(StyleAlae):
         return {
             'latent_dim': 50,
             'num_layers': NUM_LAYERS,
-            'map_num_layers': 3,
-            'disc_num_layers': 3,
-            'init_channels': 4,
+            'map_num_layers': 4,
+            'disc_num_layers': 2,
+            'init_channels': 16,
             'max_channels': 256,
-            'out_channels': 1,
+            'out_channels': 11,
             'lr': 1e-4,
-            'beta1': 0.9,
+            'beta1': 0.0,
             'beta2': 0.99,
             'gamma': 10,
         }
@@ -81,8 +86,10 @@ def train(args):
     trainer.train(
         stylealae,
         args.epochs,
-        mnist.datasets(args.batch_size, padding=2, flatten=False),
-        mnist.datasets(args.batch_size, padding=2, flatten=False, train=False),
+        mnist.datasets(
+            args.batch_size, padding=2, flatten=False),
+        mnist.datasets(
+            args.batch_size, padding=2, flatten=False, train=False),
         trainlen=len(mnist.x_train) // args.batch_size)
 
     return 0
