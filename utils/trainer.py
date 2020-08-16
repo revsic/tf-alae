@@ -74,7 +74,7 @@ class Trainer:
                         # run callback in step order
                         self.callback(model, step, epoch)
 
-                    losses = model.trainstep(datum)
+                    losses = model.trainstep(datum, epoch, step)
                     self.write_summary(losses, step)
 
                     if self.ckpt_interval is not None and \
@@ -93,7 +93,7 @@ class Trainer:
             # test phase
             metrics = []
             for datum in testset:
-                metrics.append(model.losses(datum))
+                metrics.append(model.losses(datum, epoch, step))
 
             self.write_summary(self.mean_metric(metrics), step, train=False)
 

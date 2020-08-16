@@ -91,20 +91,24 @@ class StyleAlae(ALAE):
         rctor = self.gen(self.enc(x))
         return tf.reduce_mean(tf.abs(rctor - x))
 
-    def losses(self, x):
+    def losses(self, x, epochs, steps):
         """Loss values for tensorboard summary.
         Args:
             x: tf.Tensor, [B, H, W, C], image tensor.
+            epochs: int, current epochs.
+            steps: int, current steps in single epoch.
         Returns:
             Dict[str, np.array], loss values.
         """
         x = self.preproc(x)
         return super(StyleAlae, self).losses(x)
 
-    def trainstep(self, x):
+    def trainstep(self, x, epochs, steps):
         """Optimize ALAE objective.
         Args:
             x: tf.Tensor, [B, H, W, C], output samples.
+            epochs: int, current epochs.
+            steps: int, current steps in single epoch.
         Returns:
             Dict[str, np.array], loss values.
         """

@@ -113,10 +113,12 @@ class ALAE(tf.keras.Model):
         recovered = self.latentpass(latent)
         return tf.reduce_mean(tf.square(latent - recovered))
 
-    def losses(self, x):
+    def losses(self, x, epochs, steps):
         """Loss values for tensorboard summary.
         Args:
             x: tf.Tensor, [B, ...], output samples.
+            epochs: int, current epochs.
+            steps: int, current steps in single epoch.
         Returns:
             Dict[str, np.array], loss values.
         """
@@ -151,10 +153,12 @@ class ALAE(tf.keras.Model):
         opt.apply_gradients(zip(grad, var))
         return z, loss
 
-    def trainstep(self, x):
+    def trainstep(self, x, epochs, steps):
         """Optimize ALAE objective.
         Args:
             x: tf.Tensor, [B, ...], output samples.
+            epochs: int, current epochs.
+            steps: int, currrent steps in single epoch.
         Returns:
             Dict[str, np.array], loss values.
         """
