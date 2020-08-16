@@ -55,15 +55,18 @@ class StyleAlae(ALAE):
         self.fg_var = self.map.trainable_variables + gen_var
         self.eg_var = enc_var + gen_var
 
-    def preproc(self, x):
+    def preproc(self, x, level=None):
         """Preprocess inputs to resize with respects to level.
         Args:
             x: tf.Tensor, [B, H, W, C], image tensor.
+            level: int, resolution level.
         Returns:
             tf.Tensor, [B, S, S, C], downsampled image
                 where S = 2 ** (level + 2).
         """
-        size = 2 ** (self.level + 2)
+        if level is None:
+            level = self.level
+        size = 2 ** (level + 2)
         x = tf.image.resize(x, [size, size])
         return x
 
@@ -76,26 +79,18 @@ class StyleAlae(ALAE):
         """
         return self.enc(self.preproc(x))
 
-    @tf.function
-    def _rctor_loss(self, _, x):
-        styles = self.enc(x)
-        rctor = self.gen(styles)
-        # rctor = self.gen(self.enc(x))
-        return tf.reduce_mean(tf.abs(rctor - x))
+    # @tf.function
+    # def _rctor_loss(self, _, x):
+    #     rctor = self.gen(self.enc(x))
+    #     return tf.reduce_mean(tf.abs(rctor - x))
 
     def losses(self, x):
         x = self.preproc(x)
-        # losses = super(StyleAlae, self).losses(x)
-        losses = {}
-        losses['rctor'] = self._rctor_loss(None, x)
-        return losses
+        return super(StyleAlae, self).losses(x)
 
     def trainstep(self, x):
         x = self.preproc(x)
-        # losses = super(StyleAlae, self).trainstep(x)
-        losses = {}
-        _, losses['rctor'] = self._update(x, self._rctor_loss, self.eg_var, self.rctor_opt)
-        return losses
+        return super(StyleAlae, self).trainstep(x)
 
     def mapper(self):
         """Model for mpping latent from prior.
