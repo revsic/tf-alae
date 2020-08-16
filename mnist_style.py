@@ -46,7 +46,7 @@ class StyleMNIST(StyleAlae):
         Returns:
             _: tf.Tensor, [B, 32, 32, 1], output tensors.
         """
-        x = super().generate(z)[..., :1]
+        x = super().generate(z)
         return tf.clip_by_value(x, -1, 1)
 
     @staticmethod
@@ -58,7 +58,7 @@ class StyleMNIST(StyleAlae):
             'disc_num_layers': 2,
             'init_channels': 16,
             'max_channels': 256,
-            'out_channels': 11,
+            'out_channels': 1,
             'lr': 1e-4,
             'beta1': 0.0,
             'beta2': 0.99,
