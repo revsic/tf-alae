@@ -126,6 +126,7 @@ class ALAE(tf.keras.Model):
             'latent': self._latent_loss(z).numpy(),
         }
 
+    @tf.function
     def _update(self, x, loss_fn, var, opt):
         """Update weights with gradient and optimizer.
         Args:
@@ -144,7 +145,7 @@ class ALAE(tf.keras.Model):
         
         grad = tape.gradient(loss, var)
         opt.apply_gradients(zip(grad, var))
-        return z.numpy(), loss.numpy()
+        return z, loss
 
     def trainstep(self, x):
         """Optimize ALAE objective.
@@ -157,9 +158,9 @@ class ALAE(tf.keras.Model):
         _, gloss = self._update(x, self._gen_loss, self.fg_var, self.fg_opt)
         _, lloss = self._update(x, self._latent_loss, self.eg_var, self.eg_opt)
         return {
-            'disc': dloss,
-            'gen': gloss,
-            'latent': lloss,
+            'disc': dloss.numpy(),
+            'gen': gloss.numpy(),
+            'latent': lloss.numpy(),
         }
 
     def mapper(self, *args, **kwargs):
