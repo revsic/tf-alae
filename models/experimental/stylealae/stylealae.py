@@ -101,7 +101,7 @@ class StyleAlae(ALAE):
             Dict[str, np.array], loss values.
         """
         x = self.preproc(x)
-        return super(StyleAlae, self).losses(x)
+        return super(StyleAlae, self).losses(x, epochs, steps)
 
     def trainstep(self, x, epochs, steps):
         """Optimize ALAE objective.
@@ -113,7 +113,7 @@ class StyleAlae(ALAE):
             Dict[str, np.array], loss values.
         """
         x = self.preproc(x)
-        return super(StyleAlae, self).trainstep(x)
+        return super(StyleAlae, self).trainstep(x, epochs, steps)
 
     def mapper(self):
         """Model for mpping latent from prior.
