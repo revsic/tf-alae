@@ -80,16 +80,34 @@ class StyleAlae(ALAE):
         """
         return self.enc(self.preproc(x))
 
-    # @tf.function
-    # def _rctor_loss(self, _, x):
-    #     rctor = self.gen(self.enc(x))
-    #     return tf.reduce_mean(tf.abs(rctor - x))
+    @tf.function
+    def _rctor_loss(self, _, x):
+        """Compute image reconstructor loss.
+        Args:
+            x: tf.Tensor, [B, H, W, C], image tensor.
+        Returns:
+            tf.Tensor, [], reconstruction loss value.
+        """
+        rctor = self.gen(self.enc(x))
+        return tf.reduce_mean(tf.abs(rctor - x))
 
     def losses(self, x):
+        """Loss values for tensorboard summary.
+        Args:
+            x: tf.Tensor, [B, H, W, C], image tensor.
+        Returns:
+            Dict[str, np.array], loss values.
+        """
         x = self.preproc(x)
         return super(StyleAlae, self).losses(x)
 
     def trainstep(self, x):
+        """Optimize ALAE objective.
+        Args:
+            x: tf.Tensor, [B, H, W, C], output samples.
+        Returns:
+            Dict[str, np.array], loss values.
+        """
         x = self.preproc(x)
         return super(StyleAlae, self).trainstep(x)
 
@@ -113,6 +131,7 @@ class StyleAlae(ALAE):
                         max_channels=self.max_channels,
                         num_layer=self.num_layer,
                         out_channels=self.out_channels)
+        # for multiresolution progressive growing
         for i in range(self.num_layer, 0, -1):
             gen.set_level(i - 1)
             gen.build((None, self.latent_dim))
@@ -127,7 +146,7 @@ class StyleAlae(ALAE):
                       max_channels=self.max_channels,
                       num_layer=self.num_layer,
                       latent_dim=self.latent_dim)
-        
+        # for multiresolution progressive growing
         img_size = self.img_size
         for i in range(self.num_layer, 0, -1):
             enc.set_level(i - 1)
