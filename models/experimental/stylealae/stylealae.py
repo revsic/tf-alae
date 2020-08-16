@@ -67,7 +67,7 @@ class StyleAlae(ALAE):
         if level is None:
             level = self.level
         size = 2 ** (level + 2)
-        x = tf.image.resize(x, [size, size])
+        x = tf.image.resize(x, [size, size], antialias=True)
         return x
 
     def encode(self, x):
