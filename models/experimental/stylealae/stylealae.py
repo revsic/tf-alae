@@ -35,7 +35,8 @@ class StyleAlae(ALAE):
                      self.settings['gamma'],
                      self.settings['lr'],
                      self.settings['beta2'],
-                     self.settings['beta2'])
+                     self.settings['beta2'],
+                     self.settings['disc_gclip'])
         
         self.rctor_opt = tf.keras.optimizers.Adam(
             self.settings['lr'], self.settings['beta1'], self.settings['beta2'])
@@ -164,4 +165,5 @@ class StyleAlae(ALAE):
             'beta1': 0.9,
             'beta2': 0.99,
             'gamma': 10,
+            'disc_gclip': None,
         }

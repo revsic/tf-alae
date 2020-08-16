@@ -63,6 +63,7 @@ class StyleMNIST(StyleAlae):
             'beta1': 0.0,
             'beta2': 0.99,
             'gamma': 10,
+            'disc_gclip': 1e2,
         }
 
 
