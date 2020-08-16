@@ -28,6 +28,7 @@ class Encoder(tf.keras.Model):
         resolution = 4 * 2 ** (self.num_layer - 1)
         channels = self.init_channels
         out_dim = min(self.max_channels, channels)
+        self.base_style = tf.zeros([1, self.latent_dim], dtype=tf.float32)
 
         self.blocks = []
         self.from_rgb = []
@@ -71,16 +72,18 @@ class Encoder(tf.keras.Model):
         Returns:
             styles: tf.Tensor, [B, latent_dim], style vector.
         """
-        bsize = tf.shape(x)[0]
-        styles = tf.zeros([bsize, self.latent_dim], dtype=tf.float32)
-
+        # [1, latent_dim]
+        styles = self.base_style
         start = self.num_layer - self.level - 1
-
+        # [B, H, W, out_dim]
         x = self.from_rgb[start](x)
         x = tf.nn.leaky_relu(x, alpha=0.2)
 
         for block in self.blocks[start:]:
+            # [B, S, S, C] where S is half of the previous, C is the double
+            # , [B, latent_dim], [B, latent_dim]
             x, s1, s2 = block(x)
+            # [B, latent_dim]
             styles += s1 + s2
 
         return styles / (self.level + 1)
