@@ -36,7 +36,7 @@ class Normalize2D(tf.keras.Model):
             tf.Tensor, [B, H, W, C], normalized tensor.
         """
         mean, var = tf.nn.moments(x, axes=[1, 2], keepdims=True)
-        return (x - mean) / (tf.math.sqrt(var) + self.eps)
+        return (x - mean) / tf.maximum(tf.math.sqrt(var), self.eps)
 
 
 class Repeat2D(tf.keras.Model):
