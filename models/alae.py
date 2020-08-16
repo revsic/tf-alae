@@ -126,7 +126,6 @@ class ALAE(tf.keras.Model):
             'latent': self._latent_loss(z).numpy(),
         }
 
-    @tf.function
     def _update(self, x, loss_fn, var, opt):
         """Update weights with gradient and optimizer.
         Args:
