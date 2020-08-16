@@ -69,7 +69,11 @@ class Trainer:
             # training phase
             with tqdm.tqdm(total=trainlen, leave=False) as pbar:
                 for datum in trainset:
-                    step += 1
+                    if cb_intval is not None and \
+                            cb_intval > 0 and step % cb_intval == 0:
+                        # run callback in step order
+                        self.callback(model, step, epoch)
+
                     losses = model.trainstep(datum)
                     self.write_summary(losses, step)
 
@@ -79,11 +83,8 @@ class Trainer:
                         _, flat = model(datum)
                         self.write_image(datum, flat, step, train=False)
                         model.save_weights(self.ckpt_path)
-                    
-                    if cb_intval is not None and \
-                            cb_intval > 0 and step % cb_intval == 0:
-                        # run callback in step order
-                        self.callback(model, step, epoch)
+
+                    step += 1
                     pbar.update()
 
             _, flat = model(datum)
@@ -128,7 +129,7 @@ class Trainer:
         with summary.as_default():
             # write tensorboard summary
             tf.summary.image(name, flat[idx:idx + 1], step=step)
-            tf.summary.image(name + '_gt', datum[idx:idx + 1], step=step)
+            # tf.summary.image(name + '_gt', datum[idx:idx + 1], step=step)
 
     def mean_metric(self, metrics):
         """Compute mean of the metrics.
