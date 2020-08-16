@@ -83,7 +83,7 @@ class Encoder(tf.keras.Model):
             x, s1, s2 = block(x)
             styles += s1 + s2
 
-        return styles
+        return styles / (self.level + 1)
 
     class Block(tf.keras.Model):
         """Encoder block for progressive downsampling.
