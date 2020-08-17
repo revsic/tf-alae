@@ -171,6 +171,34 @@ class ALAE(tf.keras.Model):
             'latent': lloss.numpy(),
         }
 
+    def write_ckpt(self, path):
+        """Write checkpoints.
+        Args:
+            path: str, path to write.
+        Returns:
+            str, full ckpt path.
+        """
+        ckpt = tf.train.Checkpoint(
+            map=self.map,
+            enc=self.enc,
+            gen=self.gen,
+            disc=self.disc)
+        return ckpt.save(path)
+
+    def load_ckpt(self, path):
+        """Load checkpoints.
+        Args:
+            path: str, path to load.
+        Returns:
+            tf.python.training.tracking.util.CheckpointLoadStatus, load status.
+        """
+        ckpt = tf.train.Checkpoint(
+            map=self.map,
+            enc=self.enc,
+            gen=self.gen,
+            disc=self.disc)
+        return ckpt.restore(path)
+
     def mapper(self, *args, **kwargs):
         """Model for mpping latent from prior.
         Returns:
