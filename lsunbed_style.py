@@ -15,7 +15,7 @@ PARSER.add_argument('option', type=str, default='train')
 PARSER.add_argument('--name', default='style_lsunbed_lreq')
 PARSER.add_argument('--summarydir', default='./summary')
 PARSER.add_argument('--ckptdir', default='./ckpt')
-PARSER.add_argument('--epochs', default=10, type=int)
+PARSER.add_argument('--epochs', default=112, type=int)
 PARSER.add_argument('--ckpt_interval', default=1000, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
 PARSER.add_argument('--batch_size', default=4, type=int)
@@ -24,7 +24,7 @@ PARSER.add_argument('--evalset', default='D:\\bedroom_val_lmdb\\bedroom_val_lmdb
 
 NUM_LAYERS = 7
 RESOLUTION = (NUM_LAYERS + 1) ** 2
-EPOCHS_PER_LEVEL = 1
+EPOCHS_PER_LEVEL = 2
 
 
 class StyleLsunBed(StyleAlae):
@@ -50,15 +50,15 @@ class StyleLsunBed(StyleAlae):
     @staticmethod
     def default_setting():
         return {
-            'latent_dim': 256,
+            'latent_dim': 512,
             'num_layers': NUM_LAYERS,  # 7 => resolution 256x256
-            'map_num_layers': 5,
+            'map_num_layers': 8,
             'disc_num_layers': 3,
-            'init_channels': 8,
-            'max_channels': 256,
+            'init_channels': 32,
+            'max_channels': 512,
             'out_channels': 3,
             'lr': 0.0015,
-            'beta1': 0.9,
+            'beta1': 0.0,
             'beta2': 0.99,
             'gamma': 10,
         }
@@ -69,8 +69,6 @@ TODO: blending factor, pixel norm, lod driver (dynamic batch)
 """
 
 def train(args):
-    tf.get_logger().setLevel(logging.ERROR)
-
     lsunbed = LsunBed(args.dataset)
     lsunbed_eval = LsunBed(args.evalset)
     stylealae = StyleLsunBed()
