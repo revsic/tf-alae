@@ -15,7 +15,7 @@ PARSER.add_argument('option', type=str, default='train')
 PARSER.add_argument('--name', default='style_mnist')
 PARSER.add_argument('--summarydir', default='./summary')
 PARSER.add_argument('--ckptdir', default='./ckpt')
-PARSER.add_argument('--epochs', default=40, type=int)
+PARSER.add_argument('--epochs', default=56, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
 PARSER.add_argument('--batch_size', default=128, type=int)
 
@@ -27,7 +27,7 @@ RESOLUTION = (NUM_LAYERS + 1) ** 2
 #     15: 2,
 #     40: 3,
 # }
-EPOCHS_PER_LEVEL = 10
+EPOCHS_PER_LEVEL = 14
 
 
 class StyleMNIST(StyleAlae):
@@ -65,6 +65,8 @@ class StyleMNIST(StyleAlae):
             'beta2': 0.99,
             'gamma': 20,
             'disc_gclip': 1e2,
+            'epochs_per_level': EPOCHS_PER_LEVEL,
+            'pretrain_epochs': EPOCHS_PER_LEVEL // 2,
         }
 
 
