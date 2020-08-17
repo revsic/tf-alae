@@ -118,7 +118,7 @@ class ALAE(tf.keras.Model):
         Args:
             x: tf.Tensor, [B, ...], output samples.
             epochs: int, current epochs.
-            steps: int, current steps in single epoch.
+            steps: int, current steps.
         Returns:
             Dict[str, np.array], loss values.
         """
@@ -158,7 +158,7 @@ class ALAE(tf.keras.Model):
         Args:
             x: tf.Tensor, [B, ...], output samples.
             epochs: int, current epochs.
-            steps: int, currrent steps in single epoch.
+            steps: int, currrent steps.
         Returns:
             Dict[str, np.array], loss values.
         """

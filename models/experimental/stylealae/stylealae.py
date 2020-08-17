@@ -96,7 +96,7 @@ class StyleAlae(ALAE):
         Args:
             x: tf.Tensor, [B, H, W, C], image tensor.
             epochs: int, current epochs.
-            steps: int, current steps in single epoch.
+            steps: int, current steps.
         Returns:
             Dict[str, np.array], loss values.
         """
@@ -111,7 +111,7 @@ class StyleAlae(ALAE):
         Args:
             x: tf.Tensor, [B, H, W, C], output samples.
             epochs: int, current epochs.
-            steps: int, current steps in single epoch.
+            steps: int, current steps.
         Returns:
             Dict[str, np.array], loss values.
         """
