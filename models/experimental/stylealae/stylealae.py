@@ -27,6 +27,8 @@ class StyleAlae(ALAE):
         self.init_channels = self.settings['init_channels']
         self.max_channels = self.settings['max_channels']
         self.out_channels = self.settings['out_channels']
+        self.epochs_per_level = self.settings['epochs_per_level']
+        self.pretrain_epochs = self.settings['pretrain_epochs']
 
         self.level = self.num_layer - 1
         self.img_size = 2 ** (self.num_layer + 1)
@@ -101,8 +103,11 @@ class StyleAlae(ALAE):
             Dict[str, np.array], loss values.
         """
         x = self.preproc(x)
+        if self.pretrain_epochs is None:
+            return super(StyleAlae, self).losses(x, epochs, steps)
+
         losses = {'rctor': self._rctor_loss(None, x).numpy()}
-        if epochs % 10 > 5:
+        if epochs % self.epochs_per_level > self.pretrain_epochs:
             losses.update(super(StyleAlae, self).losses(x, epochs, steps))
         return losses
 
@@ -116,9 +121,12 @@ class StyleAlae(ALAE):
             Dict[str, np.array], loss values.
         """
         x = self.preproc(x)
+        if self.pretrain_epochs is None:
+            return super(StyleAlae, self).trainstep(x, epochs, steps)
+
         _, rloss = self._update(x, self._rctor_loss, self.eg_var, self.rctor_opt)
         losses = {'rctor': rloss.numpy()}
-        if epochs % 10 > 5:
+        if epochs % self.epochs_per_level > self.pretrain_epochs:
             losses.update(super(StyleAlae, self).trainstep(x, epochs, steps))
         return losses
 
@@ -196,4 +204,6 @@ class StyleAlae(ALAE):
             'beta2': 0.99,
             'gamma': 10,
             'disc_gclip': None,
+            'epochs_per_level': None,
+            'pretrain_epochs': None,
         }
