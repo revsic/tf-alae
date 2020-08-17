@@ -67,8 +67,8 @@ def train(args):
         os.makedirs(summary_path)
     
     ckpt_path = os.path.join(args.ckptdir, modelname)
-    if not os.path.exists(args.ckptdir):
-        os.makedirs(args.ckptdir)
+    if not os.path.exists(ckpt_path):
+        os.makedirs(ckpt_path)
 
     trainer = Trainer(summary_path, ckpt_path)
     trainer.train(
