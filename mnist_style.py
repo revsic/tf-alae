@@ -15,18 +15,19 @@ PARSER.add_argument('option', type=str, default='train')
 PARSER.add_argument('--name', default='style_mnist')
 PARSER.add_argument('--summarydir', default='./summary')
 PARSER.add_argument('--ckptdir', default='./ckpt')
-PARSER.add_argument('--epochs', default=70, type=int)
+PARSER.add_argument('--epochs', default=40, type=int)
 PARSER.add_argument('--seed', default=1234, type=int)
 PARSER.add_argument('--batch_size', default=128, type=int)
 
 NUM_LAYERS = 4
 RESOLUTION = (NUM_LAYERS + 1) ** 2
-EPOCHS_PER_LEVEL = {
-    0: 0,
-    3: 1,
-    15: 2,
-    40: 3,
-}
+# EPOCHS_PER_LEVEL = {
+#     0: 0,
+#     3: 1,
+#     15: 2,
+#     40: 3,
+# }
+EPOCHS_PER_LEVEL = 10
 
 
 class StyleMNIST(StyleAlae):
@@ -62,7 +63,7 @@ class StyleMNIST(StyleAlae):
             'lr': 1e-4,
             'beta1': 0.0,
             'beta2': 0.99,
-            'gamma': 10,
+            'gamma': 20,
             'disc_gclip': 1e2,
         }
 
@@ -79,8 +80,8 @@ def train(args):
         os.makedirs(summary_path)
     
     ckpt_path = os.path.join(args.ckptdir, modelname)
-    if not os.path.exists(args.ckptdir):
-        os.makedirs(args.ckptdir)
+    if not os.path.exists(ckpt_path):
+        os.makedirs(ckpt_path)
 
     controller = LevelController(NUM_LAYERS, EPOCHS_PER_LEVEL)
     trainer = Trainer(summary_path, ckpt_path, callback=controller)
