@@ -101,7 +101,7 @@ class Trainer:
             self.write_image(datum, flat, step, train=False)
 
             # write checkpoint
-            model.save_weights(self.ckpt_path)
+            self.write_checkpoint(model, step)
 
     def write_summary(self, metrics, step, train=True):
         """Write tensorboard summary.
@@ -130,6 +130,15 @@ class Trainer:
             # write tensorboard summary
             tf.summary.image(name, flat[idx:idx + 1], step=step)
             # tf.summary.image(name + '_gt', datum[idx:idx + 1], step=step)
+
+    def write_checkpoint(self, model, step):
+        """Write checkpoints.
+        Args:
+            model: tf.keras.Model, model.
+            step: int, current steps.
+        """
+        path = os.path.join(self.ckpt_path, 'step{}'.format(step))
+        model.save_weights(path)
 
     def mean_metric(self, metrics):
         """Compute mean of the metrics.
