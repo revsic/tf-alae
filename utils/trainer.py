@@ -138,7 +138,7 @@ class Trainer:
             step: int, current steps.
         """
         path = os.path.join(self.ckpt_path, 'step{}.ckpt'.format(step))
-        model.save_weights(path)
+        model.write_ckpt(path)
 
     def mean_metric(self, metrics):
         """Compute mean of the metrics.
