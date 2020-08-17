@@ -28,7 +28,7 @@ class StyleAlae(ALAE):
         self.max_channels = self.settings['max_channels']
         self.out_channels = self.settings['out_channels']
 
-        self.level = 0
+        self.level = self.num_layer - 1
         self.img_size = 2 ** (self.num_layer + 1)
 
         self.prepare(self.latent_dim,
@@ -143,8 +143,8 @@ class StyleAlae(ALAE):
                         num_layer=self.num_layer,
                         out_channels=self.out_channels)
         # for multiresolution progressive growing
-        for i in range(self.num_layer, 0, -1):
-            gen.set_level(i - 1)
+        for i in range(self.num_layer):
+            gen.set_level(i)
             gen.build((None, self.latent_dim))
         return gen
 
@@ -158,11 +158,11 @@ class StyleAlae(ALAE):
                       num_layer=self.num_layer,
                       latent_dim=self.latent_dim)
         # for multiresolution progressive growing
-        img_size = self.img_size
-        for i in range(self.num_layer, 0, -1):
-            enc.set_level(i - 1)
+        img_size = 4
+        for i in range(self.num_layer):
+            enc.set_level(i)
             enc.build((None, img_size, img_size, self.out_channels))
-            img_size //= 2
+            img_size *= 2
         return enc
 
     def discriminator(self):
