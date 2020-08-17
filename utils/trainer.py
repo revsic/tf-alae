@@ -82,7 +82,7 @@ class Trainer:
                         # if training set is too large
                         _, flat = model(datum)
                         self.write_image(datum, flat, step, train=False)
-                        model.save_weights(self.ckpt_path)
+                        self.write_checkpoint(model, step)
 
                     step += 1
                     pbar.update()
@@ -137,7 +137,7 @@ class Trainer:
             model: tf.keras.Model, model.
             step: int, current steps.
         """
-        path = os.path.join(self.ckpt_path, 'step{}'.format(step))
+        path = os.path.join(self.ckpt_path, 'step{}.ckpt'.format(step))
         model.save_weights(path)
 
     def mean_metric(self, metrics):
