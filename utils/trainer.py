@@ -86,6 +86,7 @@ class Trainer:
 
                     step += 1
                     pbar.update()
+                    pbar.set_postfix({k: v.item() for k, v in losses.items()})
 
             _, flat = model(datum)
             self.write_image(datum, flat, step)
